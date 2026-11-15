@@ -1,0 +1,3005 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>SmartDrive Retail</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        fontFamily: {
+          sans: ['ui-sans-serif', 'system-ui', '-apple-system', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'Arial', 'sans-serif']
+        }
+      }
+    }
+  };
+</script>
+<style>
+  @keyframes raindropPopAndFall {
+    0%   { opacity: 0;    transform: translateY(-26px) scale(0.84); }
+    11%  { opacity: 0.7;  transform: translateY(4px) scale(1.04); }
+    18%  { opacity: 0.7;  transform: translateY(0px) scale(1); }
+    76%  { opacity: 0.7;  transform: translateY(0px) scale(1); }
+    88%  { opacity: 0.55; transform: translateY(18px) scaleX(0.95) scaleY(1.07); }
+    100% { opacity: 0;    transform: translateY(82px) scaleX(0.86) scaleY(1.2); }
+  }
+  .animate-raindrop-toast {
+    animation: raindropPopAndFall 2.5s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  }
+  @keyframes partyPopperArc {
+    0%   { opacity: 0; transform: translate(0px, 0px) rotate(0deg) scale(0.3); }
+    12%  { opacity: 1; transform: translate(calc(var(--tx) * 0.65), calc(var(--ty) * 0.72)) rotate(calc(var(--rot) * 0.4)) scale(1.15); }
+    42%  { opacity: 1; transform: translate(var(--tx), var(--ty)) rotate(var(--rot)) scale(1); }
+    100% { opacity: 0; transform: translate(calc(var(--tx) + var(--drift)), calc(var(--ty) + var(--fall))) rotate(calc(var(--rot) + 270deg)) scale(0.75); }
+  }
+  .animate-party-confetti {
+    animation: partyPopperArc 2.2s cubic-bezier(0.16, 0.88, 0.32, 1) forwards;
+    animation-delay: var(--delay, 0ms);
+  }
+  @keyframes popperRecoil {
+    0%   { transform: scale(0.65) rotate(-14deg); opacity: 0; }
+    18%  { transform: scale(1.22) rotate(6deg); opacity: 1; }
+    35%  { transform: scale(0.95) rotate(-2deg); opacity: 1; }
+    82%  { transform: scale(1) rotate(0deg); opacity: 0.95; }
+    100% { transform: scale(0.85) rotate(0deg); opacity: 0; }
+  }
+  .animate-popper-cannon {
+    animation: popperRecoil 2.2s ease-out forwards;
+  }
+  @keyframes spinSlow {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+  .animate-ring-spin { animation: spinSlow 4.5s linear infinite; }
+  /* Prevent iOS zoom on input focus */
+  input, select, textarea { font-size: 16px !important; }
+  @media (min-width: 640px) {
+    input, select, textarea { font-size: inherit; }
+  }
+  /* Nice scrollbars */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: #475569; }
+  /* Hide number input spinners on mobile */
+  input[type=number]::-webkit-inner-spin-button,
+  input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+  input[type=number] { -moz-appearance: textfield; }
+  /* Hide horizontal overflow globally */
+  html, body { overflow-x: hidden; }
+  /* larger text for floor use */
+  html { font-size: 17px; }
+  .text-\[9px\]  { font-size: 11px !important; }
+  .text-\[10px\] { font-size: 12px !important; }
+  .text-\[11px\] { font-size: 13px !important; }
+  @media (min-width: 640px) {
+    .sm\:text-\[10px\] { font-size: 12px !important; }
+    .sm\:text-\[11px\] { font-size: 13px !important; }
+  }
+</style>
+</head>
+<body class="bg-slate-950 text-slate-100 font-sans">
+
+<!-- ============================= TOAST LAYER ============================= -->
+<div id="toastLayer" class="fixed top-16 right-4 z-50 pointer-events-none flex flex-col items-end gap-2"></div>
+
+<!-- ============================= HEADER ============================= -->
+<header class="bg-slate-900/95 backdrop-blur-md border-b border-slate-800 sticky top-0 z-40">
+  <div class="max-w-5xl mx-auto px-3 sm:px-4 py-2.5 sm:py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-3">
+    <div class="flex items-center justify-between">
+      <div class="flex items-center gap-2.5">
+        <div class="w-9 h-9 rounded-xl bg-emerald-500/15 border border-emerald-500/40 flex items-center justify-center">
+          <svg class="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 17l6-6 4 4 8-8"/><path stroke-linecap="round" stroke-linejoin="round" d="M17 7h4v4"/></svg>
+        </div>
+        <div>
+          <h1 class="font-extrabold text-base sm:text-lg tracking-tight text-white leading-tight">SmartDrive Retail</h1>
+          <p class="text-[10px] sm:text-[11px] text-slate-400" id="headerSubtitle">Live Campaign &amp; Floor Tracker</p>
+        </div>
+      </div>
+    </div>
+    <div class="flex items-center justify-between sm:justify-end gap-2">
+      <nav class="flex bg-slate-950 p-1 rounded-xl border border-slate-800 text-xs w-full sm:w-auto justify-between sm:justify-start">
+        <button data-tab="entry" class="tab-btn px-2.5 sm:px-3 py-1.5 rounded-lg font-semibold transition whitespace-nowrap bg-emerald-500 text-slate-950 shadow-sm">Floor Entry</button>
+        <button data-tab="reports" class="tab-btn px-2.5 sm:px-3 py-1.5 rounded-lg font-semibold transition whitespace-nowrap text-slate-400 hover:text-white">Reports</button>
+        <button data-tab="manager" class="tab-btn px-2.5 sm:px-3 py-1.5 rounded-lg font-semibold transition whitespace-nowrap text-slate-400 hover:text-white">Manager</button>
+      </nav>
+    </div>
+  </div>
+</header>
+
+<main class="max-w-5xl mx-auto px-3 sm:px-4 pt-4 sm:pt-6 pb-16">
+
+  <!-- ========================= TAB: FLOOR ENTRY ========================= -->
+  <section id="tab-entry" class="tab-panel max-w-xl mx-auto space-y-4 sm:space-y-6">
+
+    <!-- Login Card -->
+    <div id="loginCard" class="bg-slate-900 border border-slate-800 rounded-2xl p-5 sm:p-6 text-center space-y-5 shadow-xl">
+      <div class="w-12 h-12 rounded-2xl bg-emerald-500/15 border border-emerald-500/40 flex items-center justify-center mx-auto">
+        <svg class="w-6 h-6 text-emerald-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+      </div>
+      <div>
+        <h2 class="text-lg font-extrabold text-white">Staff Shift Login</h2>
+        <p class="text-xs text-slate-400 mt-1">Type or select your name to start. You stay signed in on this device until 11:00 PM or until you tap Logout.</p>
+      </div>
+      <form id="loginForm" class="max-w-xs mx-auto space-y-3 text-left">
+        <div class="relative">
+          <label class="text-[11px] font-semibold text-slate-400 block mb-1">Select Staff Member</label>
+          <input id="loginSearch" type="text" autocomplete="off" placeholder="Type or select your name" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-base text-white focus:outline-none focus:border-emerald-500" />
+          <input id="loginStaffSelect" type="hidden" value="" />
+          <ul id="loginList" class="hidden absolute left-0 right-0 mt-1 z-30 max-h-60 overflow-y-auto bg-slate-900 border border-slate-700 rounded-xl shadow-2xl"></ul>
+        </div>
+        <div id="loginPreview" class="hidden space-y-2"></div>
+        <p id="authError" class="text-xs text-rose-400 font-semibold text-center hidden"></p>
+        <button type="submit" class="w-full bg-emerald-500 active:bg-emerald-400 hover:bg-emerald-400 text-slate-950 py-2.5 rounded-xl text-sm font-extrabold transition">Start Shift Session</button>
+      </form>
+
+    </div>
+
+    <!-- Active Session Panel -->
+    <div id="sessionPanel" class="space-y-4 hidden">
+      <div class="bg-emerald-950/40 border border-emerald-700/50 rounded-2xl p-3.5 sm:p-4 flex flex-wrap items-center justify-between gap-2">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-emerald-500/20 flex items-center justify-center shrink-0">
+            <svg class="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+          </div>
+          <div>
+            <p class="text-sm font-extrabold text-white" id="sessionName">Active Shift</p>
+            <p class="text-xs text-slate-300" id="sessionMeta"></p>
+            <p class="text-[11px] text-emerald-400 mt-0.5 hidden" id="bioStatus"></p>
+          </div>
+        </div>
+        <button id="endShiftBtn" class="text-sm bg-rose-950/80 active:bg-rose-900 hover:bg-rose-900 text-rose-300 border border-rose-800 px-3 py-1.5 rounded-xl font-bold transition">Logout</button>
+      </div>
+
+      <div id="myStats" class="space-y-2"></div>
+
+      <div id="undoBanner" class="hidden bg-amber-950/50 border border-amber-700/60 rounded-2xl p-3 flex flex-wrap items-center justify-between gap-2">
+        <div class="flex items-center gap-2 text-amber-200 text-xs">
+          <svg class="w-4 h-4 text-amber-400 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          <span id="undoText"></span>
+        </div>
+        <button id="undoBtn" class="bg-amber-500 active:bg-amber-400 hover:bg-amber-400 text-slate-950 text-xs px-3 py-1.5 rounded-xl flex items-center gap-1 font-extrabold transition shrink-0">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/></svg>
+          <span>Undo</span>
+        </button>
+      </div>
+
+      <!-- Entry Form -->
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-5 space-y-4 shadow-xl">
+        <h3 class="font-extrabold text-white text-base">Record Floor Drive Sale</h3>
+        <div class="grid grid-cols-2 gap-3">
+          <div class="bg-slate-950 border border-slate-800 rounded-xl p-3">
+            <p class="text-[11px] font-semibold text-slate-400">Entry Date</p>
+            <p id="entryDateText" class="text-base font-extrabold text-white mt-0.5">—</p>
+          </div>
+          <div class="bg-slate-950 border border-slate-800 rounded-xl p-3">
+            <p class="text-[11px] font-semibold text-slate-400">Credit Dept</p>
+            <p id="entryDeptText" class="text-base font-extrabold text-emerald-400 mt-0.5">—</p>
+          </div>
+        </div>
+        <input id="entryDate" type="hidden" />
+        <select id="targetDept" class="hidden"></select>
+        <div>
+          <label class="text-[11px] font-semibold text-slate-400 block mb-1">Active Drive Event</label>
+          <select id="entryDriveSelect" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-base text-white focus:outline-none focus:border-emerald-500"></select>
+        </div>
+        <div id="quickAddWrap" class="pt-2 space-y-4 hidden">
+          <div>
+            <label class="text-[11px] font-semibold text-slate-400 block mb-2" id="quickAddLabel">One-Tap Quick Add</label>
+            <div class="grid grid-cols-3 gap-2" id="quickAddGrid"></div>
+          </div>
+          <div class="relative flex items-center py-1">
+            <div class="flex-grow border-t border-slate-800"></div>
+            <span class="px-3 text-[11px] text-slate-500">OR Custom Value</span>
+            <div class="flex-grow border-t border-slate-800"></div>
+          </div>
+          <div class="flex gap-2">
+            <input id="customValue" type="number" step="any" min="0" placeholder="Enter value..." class="flex-1 bg-slate-950 border border-slate-800 rounded-xl p-3 text-base text-white focus:outline-none focus:border-emerald-500" />
+            <button id="submitCustom" class="bg-emerald-500 active:bg-emerald-400 hover:bg-emerald-400 text-slate-950 px-4 sm:px-5 rounded-xl text-base font-extrabold transition">Submit</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================= TAB: REPORTS ========================= -->
+  <section id="tab-reports" class="tab-panel space-y-4 sm:space-y-6 hidden">
+
+    <!-- Filters -->
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-3 sm:p-4 space-y-3">
+      <div class="flex flex-wrap items-center justify-between gap-2">
+        <div class="flex flex-wrap items-center gap-1.5 sm:gap-2">
+          <span class="text-xs font-bold text-slate-400">Drive:</span>
+          <select id="reportDriveSelect" class="bg-slate-950 border border-slate-700 rounded-lg px-2 py-1.5 text-[11px] sm:text-xs text-white font-semibold focus:outline-none"></select>
+        </div>
+        <div class="flex flex-wrap items-center gap-1.5 sm:gap-2">
+          <span class="text-xs font-bold text-slate-400">Date:</span>
+          <div id="reportDatePills" class="flex flex-wrap gap-1.5"></div>
+        </div>
+      </div>
+      <div class="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-800">
+        <div class="flex flex-wrap items-center gap-1.5 sm:gap-2">
+          <span class="text-xs font-bold text-slate-400 mr-1">Dept:</span>
+          <select id="reportDeptSelect" class="bg-slate-950 border border-slate-700 rounded-lg px-2 py-1.5 text-[11px] sm:text-xs text-white font-semibold focus:outline-none"></select>
+        </div>
+        <div class="flex flex-wrap items-center gap-1.5 sm:gap-2">
+          <span class="text-xs font-bold text-slate-400 mr-1">Type:</span>
+          <select id="reportTypeSelect" class="bg-slate-950 border border-slate-700 rounded-lg px-2 py-1.5 text-[11px] sm:text-xs text-white font-semibold focus:outline-none"></select>
+        </div>
+        <div class="flex items-center gap-1.5">
+          <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"/></svg>
+          <select id="reportSort" class="bg-slate-950 border border-slate-700 rounded-lg px-2 py-1.5 text-[11px] sm:text-xs text-white font-semibold focus:outline-none">
+            <option value="achieved_desc">High → Low</option>
+            <option value="achieved_asc">Low → High</option>
+            <option value="pct_desc">Goal% High</option>
+            <option value="pct_asc">Goal% Low</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Overall store total -->
+    <div id="storeTotalBar" class="bg-slate-900 border border-emerald-800/50 rounded-2xl px-4 py-3 flex flex-wrap items-center justify-between gap-2">
+      <div>
+        <p class="text-[11px] font-semibold text-slate-400">Overall Store Total</p>
+        <p id="storeTotalLabel" class="text-[11px] text-slate-500"></p>
+      </div>
+      <p id="storeTotalValue" class="text-lg font-extrabold font-mono text-emerald-400"></p>
+    </div>
+
+    <!-- Top / Bottom Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-5">
+      <!-- Top 5 -->
+      <div class="bg-slate-900 border border-emerald-700/60 rounded-2xl p-4 sm:p-5 shadow-xl relative overflow-hidden">
+        <div id="partyLayer" class="pointer-events-none absolute inset-0 overflow-hidden z-20"></div>
+        <div class="flex items-center justify-between border-b border-slate-800 pb-3 relative z-10 gap-2">
+          <div class="flex items-center gap-2">
+            <svg class="w-5 h-5 text-amber-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 16.8 5.8 21.3l2.4-7.4L2 9.4h7.6z"/></svg>
+            <div>
+              <h3 class="font-extrabold text-sm text-white">Top 5 Performers</h3>
+              <p class="text-[10px] sm:text-[11px] text-slate-400" id="topSubtitle"></p>
+            </div>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <select id="topSort" class="bg-slate-950 border border-slate-700 rounded-lg px-1.5 py-1 text-[11px] text-white font-semibold focus:outline-none"></select>
+            <button id="partyPopBtn" class="bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/50 px-2.5 py-1 rounded-lg text-[11px] font-extrabold transition">🎉 Pop</button>
+          </div>
+        </div>
+        <div id="topList" class="space-y-2 mt-3 relative z-10"></div>
+      </div>
+
+      <!-- Lowest 5 -->
+      <div class="bg-slate-900 border border-rose-800/50 rounded-2xl p-4 sm:p-5 shadow-xl">
+        <div class="flex items-center justify-between border-b border-slate-800 pb-3 gap-2">
+          <div class="flex items-center gap-2">
+            <svg class="w-5 h-5 text-rose-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+            <div>
+              <h3 class="font-extrabold text-sm text-white">Lowest 5 &amp; Zero Performers</h3>
+              <p class="text-[10px] sm:text-[11px] text-slate-400">Lowest counts first (zero excluded)</p>
+            </div>
+          </div>
+          <select id="lowestDeptSelect" class="bg-slate-950 border border-slate-700 rounded-lg px-1.5 py-1 text-[11px] text-white font-semibold focus:outline-none"></select>
+        </div>
+        <div id="bottomList" class="space-y-2 mt-3"></div>
+        <div class="mt-4 pt-3 border-t border-slate-800 space-y-2">
+          <p class="text-xs font-extrabold text-rose-300">Zero Performers <span id="zeroCount" class="text-slate-400 font-normal"></span></p>
+          <div id="zeroList" class="overflow-x-auto max-h-64 overflow-y-auto"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Full Ranking -->
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-5 space-y-3">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-2.5 gap-2">
+        <div>
+          <h3 class="font-extrabold text-sm text-white">Full Staff Ranking</h3>
+          <p class="text-[10px] sm:text-[11px] text-slate-400" id="fullRankSubtitle"></p>
+        </div>
+        <select id="fullRankDeptSelect" class="bg-slate-950 border border-slate-700 rounded-lg px-1.5 py-1 text-[11px] text-white font-semibold focus:outline-none"></select>
+      </div>
+      <p class="text-[10px] text-slate-500">Choose a department above. Tap any column heading to sort, or a row for the day-by-day detail.</p>
+      <div id="fullRanking" class="max-h-[520px] overflow-auto space-y-3"></div>
+    </div>
+
+    <!-- Dept Rankings + WhatsApp -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-5">
+      <div class="lg:col-span-6 bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-5 space-y-3">
+        <div class="flex items-center gap-2 border-b border-slate-800 pb-3">
+          <svg class="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 17l6-6 4 4 8-8"/><path stroke-linecap="round" stroke-linejoin="round" d="M17 7h4v4"/></svg>
+          <div>
+            <h3 class="font-extrabold text-sm text-white">Top Departments Ranking</h3>
+            <p class="text-[10px] sm:text-[11px] text-slate-400">Ranked by total contribution</p>
+          </div>
+        </div>
+        <div id="deptRanking" class="space-y-3"></div>
+      </div>
+
+      <div class="lg:col-span-6 bg-slate-900 border border-emerald-800/50 rounded-2xl p-4 sm:p-5 space-y-3">
+        <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800 pb-3">
+          <div>
+            <h3 class="font-extrabold text-sm text-white">WhatsApp Tracker Export</h3>
+            <p class="text-[10px] sm:text-[11px] text-slate-400">Ready-to-paste format</p>
+          </div>
+          <select id="trackerDeptSelect" class="bg-slate-950 border border-slate-700 rounded-lg px-2 py-1 text-[11px] text-white font-semibold focus:outline-none"></select>
+        </div>
+        <pre id="trackerPre" class="bg-slate-950 border border-slate-800 rounded-xl p-3 sm:p-4 text-[10px] sm:text-xs font-mono text-emerald-300 whitespace-pre-wrap leading-relaxed overflow-x-auto"></pre>
+        <div class="flex gap-2">
+          <button id="copyTrackerBtn" class="flex-1 bg-slate-800 hover:bg-slate-700 text-white border border-slate-700 py-2 sm:py-2.5 rounded-xl text-[11px] sm:text-xs font-bold flex items-center justify-center gap-1.5 transition">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+            <span>Copy Tracker</span>
+          </button>
+          <button id="waBtn" class="flex-1 bg-emerald-500 active:bg-emerald-400 hover:bg-emerald-400 text-slate-950 py-2 sm:py-2.5 rounded-xl text-[11px] sm:text-xs font-extrabold flex items-center justify-center gap-1.5 transition">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
+            <span>Send WhatsApp</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================= TAB: MANAGER ========================= -->
+  <section id="tab-manager" class="tab-panel space-y-4 sm:space-y-6 hidden">
+
+    <!-- DASHBOARD -->
+    <div class="bg-slate-900/60 border border-slate-800 rounded-2xl p-2 sm:p-3">
+      <div class="flex items-center gap-2 px-2 pb-3 flex-wrap">
+        <svg class="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
+        <h2 class="font-extrabold text-base text-white">Campaign Dashboard</h2>
+        <span class="text-[10px] bg-emerald-950 text-emerald-300 border border-emerald-800 px-2 py-0.5 rounded-full font-bold uppercase">Manager View</span>
+        <button id="lockManagerBtn" class="ml-auto text-[11px] bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 px-2.5 py-1 rounded-lg font-bold transition">🔒 Lock</button>
+      </div>
+
+      <div class="space-y-4 sm:space-y-6">
+        <!-- Drive selector row -->
+        <div class="flex flex-col sm:flex-row sm:flex-wrap sm:items-center justify-between gap-2 bg-slate-900 border border-slate-800 p-2.5 rounded-2xl">
+          <div class="flex flex-wrap items-center gap-1.5 sm:gap-2">
+            <button id="dashAllDrivesBtn" class="px-3 py-1.5 rounded-xl text-xs font-bold bg-emerald-500 text-slate-950 shadow-md">All Drives</button>
+            <div id="dashDrivePills" class="flex flex-wrap gap-1.5"></div>
+          </div>
+          <div class="flex items-center gap-2">
+            <select id="dashEventSelect" class="flex-1 sm:flex-initial bg-slate-950 border border-slate-700 rounded-xl px-2.5 py-1.5 text-xs text-white font-semibold focus:outline-none"></select>
+            <button id="emailSummaryBtn" class="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 px-2.5 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1 transition">
+              <svg class="w-3.5 h-3.5 text-emerald-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+              <span class="hidden sm:inline">Email</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Consolidated view -->
+        <div id="dashConsolidated" class="space-y-4 sm:space-y-6">
+          <div class="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3.5">
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-3 sm:p-4 space-y-1">
+              <p class="text-[10px] sm:text-[11px] font-semibold uppercase tracking-wider text-slate-400">Total Span</p>
+              <p class="text-lg sm:text-xl font-extrabold text-emerald-400" id="kpiSpanPcs">0 Pcs</p>
+              <p class="text-xs font-semibold text-indigo-400" id="kpiSpanAmt">+ ₹0</p>
+            </div>
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-3 sm:p-4 space-y-1">
+              <p class="text-[10px] sm:text-[11px] font-semibold uppercase tracking-wider text-slate-400">Today</p>
+              <p class="text-lg sm:text-xl font-extrabold text-white" id="kpiTodayPcs">0 Pcs</p>
+              <p class="text-xs font-semibold text-amber-400" id="kpiTodayAmt">+ ₹0</p>
+            </div>
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-3 sm:p-4 space-y-1">
+              <p class="text-[10px] sm:text-[11px] font-semibold uppercase tracking-wider text-slate-400">Active Drives</p>
+              <p class="text-lg sm:text-xl font-extrabold text-white" id="kpiActiveDrives">0</p>
+              <p class="text-[10px] sm:text-[11px] text-emerald-400 font-medium">Live Floor Tracking</p>
+            </div>
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-3 sm:p-4 space-y-1">
+              <p class="text-[10px] sm:text-[11px] font-semibold uppercase tracking-wider text-slate-400">Participating</p>
+              <p class="text-lg sm:text-xl font-extrabold text-white" id="kpiStaff">0</p>
+              <p class="text-[10px] sm:text-[11px] text-slate-400">Across all depts</p>
+            </div>
+          </div>
+
+          <div class="space-y-3">
+            <div class="flex items-center justify-between flex-wrap gap-2">
+              <h3 class="text-sm sm:text-base font-bold text-white">All Sales Drives — Span vs Today</h3>
+              <span class="text-[10px] sm:text-xs text-slate-400">Tap a card for drill-down</span>
+            </div>
+            <div id="driveCards" class="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4"></div>
+          </div>
+        </div>
+
+        <!-- Dedicated view -->
+        <div id="dashDedicated" class="space-y-4 sm:space-y-6 hidden">
+          <div id="dashBanner" class="bg-gradient-to-br from-emerald-950/90 via-slate-900 to-slate-800 border border-emerald-700/60 rounded-2xl p-4 sm:p-6 shadow-xl space-y-4">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <div>
+                <div class="flex items-center gap-2 mb-1 flex-wrap">
+                  <span id="dashBadge" class="text-[10px] font-bold uppercase px-2.5 py-0.5 rounded-full border"></span>
+                  <span id="dashDates" class="text-[11px] sm:text-xs text-slate-300 flex items-center gap-1"></span>
+                </div>
+                <h2 class="text-lg sm:text-2xl font-extrabold text-white" id="dashDriveName"></h2>
+              </div>
+              <div class="grid grid-cols-3 gap-2 text-center">
+                <div class="bg-slate-950/70 border border-slate-800 rounded-xl px-2 py-1.5 sm:px-3 sm:py-2">
+                  <p class="text-[9px] sm:text-[10px] text-slate-400 uppercase">Span</p>
+                  <p class="text-xs sm:text-base font-extrabold" id="dashSpanTotal"></p>
+                </div>
+                <div class="bg-slate-950/70 border border-slate-800 rounded-xl px-2 py-1.5 sm:px-3 sm:py-2">
+                  <p class="text-[9px] sm:text-[10px] text-slate-400 uppercase">Days Left</p>
+                  <p class="text-xs sm:text-base font-extrabold text-white" id="dashDaysLeft"></p>
+                </div>
+                <div class="bg-slate-950/70 border border-slate-800 rounded-xl px-2 py-1.5 sm:px-3 sm:py-2">
+                  <p class="text-[9px] sm:text-[10px] text-slate-400 uppercase">Run-Rate</p>
+                  <p class="text-xs sm:text-base font-extrabold text-amber-300" id="dashRunRate"></p>
+                </div>
+              </div>
+            </div>
+            <div class="space-y-1.5">
+              <div class="flex justify-between text-[11px] sm:text-xs gap-2">
+                <span class="text-slate-300 font-medium" id="dashSpanProgressLabel">Span Progress</span>
+                <span class="font-bold text-white text-right" id="dashSpanProgressNumbers"></span>
+              </div>
+              <div class="w-full bg-slate-950/90 h-3 rounded-full overflow-hidden p-0.5">
+                <div id="dashSpanBar" class="h-2 rounded-full transition-all duration-500 bg-gradient-to-r from-emerald-500 to-teal-400" style="width: 0%"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Advanced date picker -->
+          <div class="bg-slate-900 border border-slate-800 p-3 rounded-2xl space-y-3">
+            <div class="flex flex-col sm:flex-row sm:flex-wrap sm:items-center justify-between gap-2">
+              <div class="flex flex-wrap items-center gap-2">
+                <span class="text-xs font-semibold text-slate-400 flex items-center gap-1">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 8v10a2 2 0 002 2h14a2 2 0 002-2V8"/></svg>
+                  Date:
+                </span>
+                <select id="dashDatePreset" class="flex-1 sm:flex-initial bg-slate-950 border border-slate-700 rounded-xl px-2.5 py-1.5 text-xs text-white font-semibold focus:outline-none">
+                  <option value="today">Today</option>
+                  <option value="yesterday">Previous Day</option>
+                  <option value="last7" selected>Last 7 Days</option>
+                  <option value="last30">Last 1 Month</option>
+                  <option value="span">Entire Campaign</option>
+                  <option value="custom">Custom Date</option>
+                  <option value="calendar">Calendar (Multi)</option>
+                </select>
+                <input id="dashCustomDate" type="date" class="hidden bg-slate-950 border border-slate-800 rounded-xl px-2 py-1 text-xs text-slate-200 focus:outline-none" />
+                <button id="dashClearFilter" class="hidden text-[11px] text-emerald-400 hover:underline font-semibold">Clear</button>
+              </div>
+              <div class="flex flex-wrap items-center gap-2">
+                <button id="compareToggle" class="px-2.5 py-1.5 rounded-xl text-xs font-bold bg-slate-800 text-slate-300 hover:bg-slate-700 transition">Compare</button>
+                <select id="comparePreset" class="hidden bg-slate-950 border border-slate-700 rounded-xl px-2 py-1.5 text-xs text-white font-semibold focus:outline-none">
+                  <option value="prevDay">vs Prev Day</option>
+                  <option value="prev7">vs Prev 7 Days</option>
+                  <option value="prev30">vs Prev 30 Days</option>
+                  <option value="prevCustom">vs Custom</option>
+                </select>
+                <input id="compareCustomDate" type="date" class="hidden bg-slate-950 border border-slate-700 rounded-xl px-2 py-1 text-xs text-white focus:outline-none" />
+              </div>
+            </div>
+
+            <!-- Calendar multi-select -->
+            <div id="calendarWrap" class="hidden bg-slate-950/60 border border-slate-800 rounded-xl p-3 space-y-2">
+              <div class="flex flex-wrap items-center justify-between gap-2">
+                <p class="text-[11px] font-semibold text-slate-300">
+                  Tap dates to toggle. <span class="text-emerald-400" id="calendarCount">0 selected</span>
+                </p>
+                <div class="flex flex-wrap items-center gap-2">
+                  <button class="cal-quick text-[11px] text-slate-300 hover:text-white font-semibold" data-quick="today">Today</button>
+                  <button class="cal-quick text-[11px] text-slate-300 hover:text-white font-semibold" data-quick="last7">Last 7</button>
+                  <button class="cal-quick text-[11px] text-emerald-400 hover:underline font-semibold" data-quick="all">All</button>
+                  <button class="cal-quick text-[11px] text-rose-400 hover:underline font-semibold" data-quick="clear">Clear</button>
+                </div>
+              </div>
+              <div class="max-h-44 overflow-y-auto">
+                <div id="calendarGrid" class="grid grid-cols-7 gap-1"></div>
+              </div>
+            </div>
+
+            <!-- Summary strip -->
+            <div class="flex flex-wrap items-center justify-between gap-2 bg-slate-950 border border-slate-800 rounded-xl p-2.5">
+              <div class="text-[11px] sm:text-xs font-bold text-slate-300">
+                Showing: <span id="filteredTotal" class="text-emerald-400"></span>
+                <span id="filteredDayCount" class="text-slate-500 font-normal"></span>
+              </div>
+              <div id="compareSummary" class="hidden flex items-center gap-2 text-[11px] sm:text-xs">
+                <div>
+                  <p class="text-[9px] sm:text-[10px] text-slate-400 uppercase">Previous</p>
+                  <p class="font-bold text-slate-300" id="compareTotal"></p>
+                </div>
+                <div id="compareDelta" class="flex items-center gap-1 font-extrabold px-2 py-1 rounded-lg"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Bar chart -->
+          <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-5 space-y-3">
+            <div class="flex items-center justify-between flex-wrap gap-2">
+              <div>
+                <h3 class="text-sm font-bold text-white">Achievement Timeline</h3>
+                <p class="text-[10px] sm:text-[11px] text-slate-400">Tap a bar to isolate that day</p>
+              </div>
+              <button id="resetBarFilter" class="hidden text-xs text-emerald-400 hover:underline font-semibold">Reset</button>
+            </div>
+            <div id="barChart" class="grid grid-cols-7 gap-1.5 sm:gap-3 pt-4 items-end h-40 sm:h-44 border-b border-slate-800 pb-2"></div>
+          </div>
+
+          <!-- Dept + Staff -->
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-5">
+            <div class="lg:col-span-5 space-y-3">
+              <div class="flex items-center justify-between">
+                <h3 class="text-sm font-bold text-white">Department Breakdown</h3>
+                <button id="resetDeptFilter" class="hidden text-[11px] text-emerald-400 hover:underline font-semibold">Show All</button>
+              </div>
+              <div id="deptCards" class="space-y-2"></div>
+            </div>
+            <div class="lg:col-span-7 bg-slate-900 border border-slate-800 rounded-2xl p-3 sm:p-4 space-y-3">
+              <div class="flex items-center justify-between border-b border-slate-800 pb-2.5 gap-2">
+                <div>
+                  <h3 class="text-sm font-bold text-white">Staff Target / Achieved</h3>
+                  <p class="text-[10px] sm:text-[11px] text-slate-400">Tap for day-by-day history</p>
+                </div>
+                <span id="staffCountBadge" class="text-[10px] sm:text-[11px] font-semibold bg-slate-800 text-slate-300 px-2 py-1 rounded-lg">0</span>
+              </div>
+              <div id="staffPerformance" class="space-y-2 max-h-[360px] overflow-y-auto pr-1"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MANAGER TOOLS MENU (hamburger) -->
+    <div id="mgrMenuWrap" class="relative">
+      <button id="mgrMenuBtn" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="mgrMenuList"
+        class="w-full flex items-center gap-3 bg-slate-900 border border-slate-800 hover:border-emerald-500/60 rounded-2xl px-4 py-3 text-left transition">
+        <svg class="w-6 h-6 text-emerald-400 shrink-0" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
+        <span class="flex-1 min-w-0">
+          <span class="block font-extrabold text-sm text-white">Manager Tools</span>
+          <span id="mgrMenuCurrent" class="block text-[11px] text-slate-400 truncate">Tap to open: counts, drives, staff, logs</span>
+        </span>
+        <svg id="mgrMenuChevron" class="w-4 h-4 text-slate-400 shrink-0 transition-transform" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+      </button>
+      <div id="mgrMenuList" role="menu" class="hidden absolute left-0 right-0 mt-2 z-30 bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl overflow-hidden">
+        <button type="button" role="menuitem" data-mgr-open="counts" class="mgr-item w-full flex items-center justify-between gap-2 px-4 py-3.5 text-left text-xs font-bold text-slate-200 hover:bg-slate-800 border-b border-slate-800">
+          <span>✍️ Enter Associate Counts</span>
+        </button>
+        <button type="button" role="menuitem" data-mgr-open="drives" class="mgr-item w-full flex items-center justify-between gap-2 px-4 py-3.5 text-left text-xs font-bold text-slate-200 hover:bg-slate-800 border-b border-slate-800">
+          <span>🎯 Create &amp; Manage Sales Drives</span>
+        </button>
+        <button type="button" role="menuitem" data-mgr-open="staff" class="mgr-item w-full flex items-center justify-between gap-2 px-4 py-3.5 text-left text-xs font-bold text-slate-200 hover:bg-slate-800 border-b border-slate-800">
+          <span>👥 Staff Directory</span>
+          <span id="menuStaffCount" class="bg-slate-800 text-slate-300 px-2 py-0.5 rounded-lg text-[11px]">0</span>
+        </button>
+        <button type="button" role="menuitem" data-mgr-open="logs" class="mgr-item w-full flex items-center justify-between gap-2 px-4 py-3.5 text-left text-xs font-bold text-slate-200 hover:bg-slate-800">
+          <span>🧾 Real-Time Audit Logs</span>
+          <span id="menuLogCount" class="bg-slate-800 text-slate-300 px-2 py-0.5 rounded-lg text-[11px]">0</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Manager: enter associate counts -->
+    <div data-mgr-panel="counts" class="hidden relative bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-5 space-y-4">
+      <div>
+        <h2 class="font-extrabold text-base text-white">Enter Associate Counts</h2>
+      </div>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+        <select id="mgrDrive" class="bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-emerald-500"></select>
+        <input id="mgrDate" type="date" class="bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-emerald-500" />
+        <select id="mgrDept" class="sm:col-span-2 bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-emerald-500">
+          <option value="manual">✍️ Manual – pick names one by one</option>
+        </select>
+      </div>
+      <div class="grid grid-cols-12 gap-2 text-[10px] font-semibold text-slate-400 px-1.5">
+        <span class="col-span-5">Associate</span><span class="col-span-3">Code (auto)</span><span class="col-span-3" id="mgrValLabel">Qty</span>
+      </div>
+      <div id="mgrRows" class="space-y-2"></div>
+      <p id="mgrError" class="hidden text-xs text-rose-400 font-semibold whitespace-pre-line"></p>
+      <div class="flex gap-2">
+        <button id="mgrAddRow" type="button" class="flex-1 bg-slate-800 hover:bg-slate-700 text-white border border-slate-700 py-2.5 rounded-xl text-xs font-bold transition">+ Add Row</button>
+        <button id="mgrSubmit" type="button" class="flex-1 bg-emerald-500 hover:bg-emerald-400 text-slate-950 py-2.5 rounded-xl text-xs font-extrabold transition">Save All Entries</button>
+      </div>
+    </div>
+
+    <!-- Drives CRUD -->
+    <div data-mgr-panel="drives" class="hidden relative bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-5 space-y-4">
+      <h2 class="font-extrabold text-base text-white">Create &amp; Manage Sales Drives</h2>
+      <form id="addDriveForm" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-2">
+        <input name="name" type="text" placeholder="Drive Name" class="lg:col-span-2 bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-emerald-500" />
+        <input name="target" type="number" min="1" placeholder="Campaign Target" class="bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-emerald-500" />
+        <select name="type" class="bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-emerald-500">
+          <option value="Count">Count (Pcs)</option>
+          <option value="Amount">Amount (₹)</option>
+          <option value="Weight">Weight (Kg)</option>
+        </select>
+        <input name="startDate" type="date" class="bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-emerald-500" />
+        <input name="endDate" type="date" class="bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-emerald-500" />
+        <div class="sm:col-span-2 lg:col-span-6 grid grid-cols-2 gap-2">
+          <label class="block space-y-1"><span class="text-[11px] font-semibold text-slate-400">Weekday target / day (store total)</span>
+            <input name="targetWeekday" type="number" step="any" min="0" placeholder="e.g. 300" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-emerald-500" /></label>
+          <label class="block space-y-1"><span class="text-[11px] font-semibold text-slate-400">Weekend target / day (store total)</span>
+            <input name="targetWeekend" type="number" step="any" min="0" placeholder="e.g. 1000" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-emerald-500" /></label>
+          <p class="col-span-2 text-[10px] text-slate-500">Optional store-level targets. Use <strong>🎯 Targets</strong> on the drive for section-wise (PF, Cashiers…) targets, which give each associate a target, and for date-wise targets.</p>
+        </div>
+        <div class="sm:col-span-2 lg:col-span-6 space-y-1.5">
+          <p class="text-[11px] font-semibold text-slate-400">Sections allowed to log entries in this drive</p>
+          <div id="newDriveDepts" class="flex flex-wrap gap-1.5"></div>
+        </div>
+        <button type="submit" class="sm:col-span-2 lg:col-span-6 bg-emerald-500 active:bg-emerald-400 hover:bg-emerald-400 text-slate-950 font-extrabold text-xs py-2.5 rounded-xl flex items-center justify-center gap-1.5 transition">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+          <span>Add Sales Drive</span>
+        </button>
+      </form>
+      <div id="drivesList" class="space-y-2 pt-2"></div>
+    </div>
+
+    <!-- Staff CRUD -->
+    <div data-mgr-panel="staff" class="hidden relative bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-5 space-y-4">
+      <h2 class="font-extrabold text-base text-white flex items-center gap-2">
+        <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+        <span>Staff Directory (<span id="staffTotal">0</span>)</span>
+      </h2>
+      <form id="addStaffForm" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
+        <input name="name" type="text" placeholder="Staff Name *" autocomplete="off" class="bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-emerald-500" />
+        <input name="mobile" type="tel" inputmode="numeric" maxlength="14" placeholder="Mobile Number (optional)" autocomplete="off" class="bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-emerald-500" />
+        <select name="dept" class="bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-emerald-500">
+          <option value="">Section *</option><option>PF</option><option>F&amp;V</option><option>Staples</option><option>HPC</option><option>Apparel</option><option>Dairy</option><option>Cashiers</option><option>GM</option>
+        </select>
+        <select name="type" class="bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-emerald-500">
+          <option value="Regular">Staff</option><option value="Part-timer">Part-timer</option><option value="Promoter">Promoter</option>
+        </select>
+        <button type="submit" class="sm:col-span-2 lg:col-span-4 bg-emerald-500 active:bg-emerald-400 hover:bg-emerald-400 text-slate-950 font-extrabold text-xs py-2.5 rounded-xl flex items-center justify-center gap-1.5 transition">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+          <span>Add Staff Member</span>
+        </button>
+        <p id="staffFormError" class="sm:col-span-2 lg:col-span-4 text-xs text-rose-400 font-semibold hidden"></p>
+      </form>
+      <div id="staffList" class="space-y-2 max-h-80 overflow-y-auto pr-1"></div>
+    </div>
+
+    <!-- Audit Logs -->
+    <div data-mgr-panel="logs" class="hidden relative bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-5 space-y-3">
+      <h2 class="font-extrabold text-base text-white">Real-Time Audit Logs (<span id="logCount">0</span>)</h2>
+      <div id="auditLogs" class="space-y-2 max-h-72 overflow-y-auto pr-1 text-xs"></div>
+    </div>
+  </section>
+</main>
+
+<!-- ============================= MODALS ============================= -->
+<!-- Manager lock modal -->
+<div id="lockModal" class="hidden fixed inset-0 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+  <form id="lockForm" class="bg-slate-900 border border-emerald-500/60 rounded-2xl p-5 max-w-xs w-full space-y-3 shadow-2xl text-center">
+    <h3 class="font-extrabold text-white text-base">🔒 Manager Access</h3>
+    <input id="lockPin" type="password" inputmode="numeric" maxlength="4" autocomplete="off" placeholder="Enter code" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-sm text-white text-center tracking-widest focus:outline-none focus:border-emerald-500" />
+    <p id="lockError" class="hidden text-xs text-rose-400 font-semibold">Incorrect code</p>
+    <div class="flex gap-2.5">
+      <button type="button" id="lockCancel" class="flex-1 bg-slate-800 hover:bg-slate-700 text-white text-xs py-2.5 rounded-xl font-bold transition">Cancel</button>
+      <button type="submit" class="flex-1 bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs py-2.5 rounded-xl font-extrabold transition">Unlock</button>
+    </div>
+  </form>
+</div>
+
+<!-- Drive sections modal -->
+<div id="deptsModal" class="hidden fixed inset-0 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+  <div class="bg-slate-900 border border-emerald-500/60 rounded-2xl p-5 max-w-sm w-full space-y-3 shadow-2xl">
+    <h3 id="deptsTitle" class="font-extrabold text-white text-base">Sections</h3>
+    <p class="text-xs text-slate-300">Which sections can log entries in this drive?</p>
+    <div id="editDeptChips" class="flex flex-wrap gap-1.5"></div>
+    <div class="flex gap-2.5 pt-2">
+      <button id="deptsCancel" class="flex-1 bg-slate-800 hover:bg-slate-700 text-white text-xs py-2.5 rounded-xl font-bold transition">Cancel</button>
+      <button id="deptsSave" class="flex-1 bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs py-2.5 rounded-xl font-extrabold transition">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Edit staff modal -->
+<div id="editStaffModal" class="hidden fixed inset-0 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+  <form id="editStaffForm" class="bg-slate-900 border border-emerald-500/60 rounded-2xl p-5 max-w-sm w-full space-y-3 shadow-2xl">
+    <h3 class="font-extrabold text-white text-base">Edit Staff Details</h3>
+    <label class="block space-y-1"><span class="text-[11px] font-semibold text-slate-400">Staff Name *</span>
+      <input name="name" type="text" autocomplete="off" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-emerald-500" /></label>
+    <label class="block space-y-1"><span class="text-[11px] font-semibold text-slate-400">Mobile Number (optional)</span>
+      <input name="mobile" type="tel" inputmode="numeric" maxlength="14" autocomplete="off" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-emerald-500" /></label>
+    <label class="block space-y-1"><span class="text-[11px] font-semibold text-slate-400">Section *</span>
+      <select name="dept" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-emerald-500"></select></label>
+    <label class="block space-y-1"><span class="text-[11px] font-semibold text-slate-400">Type</span>
+      <select name="type" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-emerald-500"></select></label>
+    <p id="editStaffError" class="text-xs text-rose-400 font-semibold hidden"></p>
+    <div class="flex gap-2.5 pt-1">
+      <button id="editStaffCancel" type="button" class="flex-1 bg-slate-800 hover:bg-slate-700 text-white text-xs py-2.5 rounded-xl font-bold transition">Cancel</button>
+      <button type="submit" class="flex-1 bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs py-2.5 rounded-xl font-extrabold transition">Save Changes</button>
+    </div>
+  </form>
+</div>
+
+<!-- Edit drive modal -->
+<div id="editDriveModal" class="hidden fixed inset-0 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+  <form id="editDriveForm" class="bg-slate-900 border border-emerald-500/60 rounded-2xl p-5 max-w-md w-full space-y-3 shadow-2xl">
+    <h3 class="font-extrabold text-white text-base">Edit Drive</h3>
+    <label class="block space-y-1"><span class="text-[11px] font-semibold text-slate-400">Drive name</span>
+      <input name="name" type="text" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-sm text-white focus:outline-none focus:border-emerald-500" /></label>
+    <label class="block space-y-1"><span class="text-[11px] font-semibold text-slate-400">Campaign target (<span id="editDriveUnit"></span>)</span>
+      <input name="target" type="number" step="any" min="1" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-sm text-white focus:outline-none focus:border-emerald-500" /></label>
+    <div class="grid grid-cols-2 gap-2">
+      <label class="block space-y-1"><span class="text-[11px] font-semibold text-slate-400">Start date</span>
+        <input name="startDate" type="date" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-sm text-white focus:outline-none focus:border-emerald-500" /></label>
+      <label class="block space-y-1"><span class="text-[11px] font-semibold text-slate-400">End date</span>
+        <input name="endDate" type="date" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-sm text-white focus:outline-none focus:border-emerald-500" /></label>
+    </div>
+    <p class="text-[10px] text-slate-500">The drive type (<span id="editDriveType"></span>) can't be changed after creation. Use <strong>🎯 Targets</strong> for daily targets and <strong>Sections</strong> for the allowed sections.</p>
+    <p id="editDriveError" class="text-xs text-rose-400 font-semibold hidden"></p>
+    <div class="flex gap-2.5">
+      <button id="editDriveCancel" type="button" class="flex-1 bg-slate-800 hover:bg-slate-700 text-white text-sm py-2.5 rounded-xl font-bold transition">Cancel</button>
+      <button type="submit" class="flex-1 bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-sm py-2.5 rounded-xl font-extrabold transition">Save Changes</button>
+    </div>
+  </form>
+</div>
+
+<!-- Department employees modal -->
+<div id="deptModal" class="hidden fixed inset-0 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+  <div class="bg-slate-900 border border-slate-700 rounded-2xl p-5 max-w-md w-full max-h-[85vh] overflow-y-auto space-y-3 shadow-2xl">
+    <div class="flex items-start justify-between gap-3">
+      <div class="min-w-0">
+        <h3 id="deptModalTitle" class="font-extrabold text-white text-base"></h3>
+        <p id="deptModalSub" class="text-[11px] text-slate-400 mt-0.5"></p>
+      </div>
+      <button id="deptModalClose" type="button" class="w-8 h-8 shrink-0 flex items-center justify-center rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold">✕</button>
+    </div>
+    <div id="deptModalList" class="space-y-2"></div>
+    <p id="deptModalNone" class="text-[11px] text-slate-500 hidden"></p>
+  </div>
+</div>
+
+<!-- Targets modal -->
+<div id="targetsModal" class="hidden fixed inset-0 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+  <div class="bg-slate-900 border border-emerald-500/60 rounded-2xl p-5 max-w-lg w-full max-h-[90vh] overflow-y-auto space-y-4 shadow-2xl">
+    <div>
+      <h3 id="targetsTitle" class="font-extrabold text-white text-base">Targets</h3>
+      <p class="text-[11px] text-slate-400 mt-1 leading-relaxed">Daily targets for this drive. A <strong>store total</strong> is shown for the whole store only. To give departments and associates a target, fill the <strong>sections</strong>: each section's target is shared equally by its associates (part-timers count half). Without section targets they show counts only.</p>
+    </div>
+    <div id="targetsBody" class="space-y-3"></div>
+    <div class="flex gap-2.5 pt-1">
+      <button id="targetsCancel" type="button" class="flex-1 bg-slate-800 hover:bg-slate-700 text-white text-xs py-2.5 rounded-xl font-bold transition">Cancel</button>
+      <button id="targetsSave" type="button" class="flex-1 bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs py-2.5 rounded-xl font-extrabold transition">Save Targets</button>
+    </div>
+  </div>
+</div>
+
+<!-- Duplicate drive modal -->
+<div id="dupModal" class="hidden fixed inset-0 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+  <div class="bg-slate-900 border border-rose-500/60 rounded-2xl p-5 max-w-sm w-full space-y-3 shadow-2xl">
+    <h3 id="dupTitle" class="font-extrabold text-white text-base">⚠ Duplicate Drive</h3>
+    <p id="dupText" class="text-xs text-slate-300 leading-relaxed"></p>
+    <button onclick="document.getElementById('dupModal').classList.add('hidden')" class="w-full bg-rose-500 hover:bg-rose-400 text-white text-xs py-2.5 rounded-xl font-extrabold">OK</button>
+  </div>
+</div>
+
+<!-- Confirm high quantity modal -->
+<div id="confirmModal" class="hidden fixed inset-0 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+  <div class="bg-slate-900 border border-amber-500/60 rounded-2xl p-5 sm:p-6 max-w-sm w-full space-y-4 shadow-2xl">
+    <div class="flex items-center gap-2.5 text-amber-400">
+      <svg class="w-6 h-6 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+      <h3 class="font-extrabold text-base text-white">High Quantity Guard</h3>
+    </div>
+    <p class="text-xs text-slate-300 leading-relaxed" id="confirmText"></p>
+    <div class="flex gap-2.5 pt-2">
+      <button id="confirmCancel" class="flex-1 bg-slate-800 hover:bg-slate-700 text-white text-xs py-2.5 rounded-xl font-bold transition">Cancel</button>
+      <button id="confirmOk" class="flex-1 bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs py-2.5 rounded-xl font-extrabold transition">Yes, Confirm</button>
+    </div>
+  </div>
+</div>
+
+<!-- Staff detail modal -->
+<div id="staffModal" class="hidden fixed inset-0 bg-black/75 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 z-50">
+  <div class="bg-slate-900 border border-slate-700 rounded-2xl p-4 sm:p-6 max-w-md w-full space-y-4 shadow-2xl max-h-[90vh] overflow-y-auto">
+    <div class="flex items-start justify-between border-b border-slate-800 pb-3 gap-2">
+      <div>
+        <div class="flex items-center gap-2 flex-wrap">
+          <h3 class="text-lg font-extrabold text-white" id="modalName"></h3>
+          <span class="text-xs bg-slate-800 text-slate-300 px-2 py-0.5 rounded font-semibold" id="modalDept"></span>
+        </div>
+        <p class="text-xs text-slate-400 mt-0.5" id="modalSubtitle"></p>
+      </div>
+      <button id="modalClose" class="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="grid grid-cols-2 gap-3 text-center">
+      <div class="bg-slate-950 border border-slate-800 rounded-xl p-3">
+        <p class="text-[10px] uppercase text-slate-400">Span Achieved</p>
+        <p class="text-sm sm:text-base font-extrabold text-emerald-400 mt-0.5" id="modalTotal"></p>
+      </div>
+      <div class="bg-slate-950 border border-slate-800 rounded-xl p-3">
+        <p class="text-[10px] uppercase text-slate-400">Zero-Sale Days</p>
+        <p class="text-sm sm:text-base font-extrabold text-rose-400 mt-0.5" id="modalZero"></p>
+      </div>
+    </div>
+    <div id="modalRows" class="space-y-2 max-h-64 overflow-y-auto pr-1"></div>
+  </div>
+</div>
+
+<script>
+/* ======================================================================
+   GOOGLE SHEET CONFIG
+   ====================================================================== */
+const API_URL = "https://script.google.com/macros/s/AKfycbym-TfooC8vqe0JVN5yCKI0HbkcrdL-NIegILWYcA_wRYTsuNQB58ueQa0cvSWp57Gk/exec";   // leave "" to run in demo mode
+const API_TOKEN = "change-me-123";               // same as TOKEN in Code.gs
+const LIVE = API_URL.startsWith("https://");
+
+/* ======================================================================
+   DATA & CONSTANTS
+   ====================================================================== */
+const TODAY_DATE = LIVE ? new Date().toLocaleDateString("en-CA") : "2026-11-13";
+const YESTERDAY_DATE = getDateOffset(TODAY_DATE, -1);
+const DEPARTMENTS = ["PF", "F&V", "Staples", "HPC", "Apparel", "Dairy", "Cashiers", "GM"];
+const TYPES = [["Regular", "Staff"], ["Part-timer", "Part-timer"], ["Promoter", "Promoter"]];
+const PT_FACTOR = 0.5;   // part-timers (4 hrs) default to 50% of the normal daily target
+const driveStaffTarget = d => Number(d && d.staffTarget) > 0 ? Number(d.staffTarget) : 0;      // 0 = no target set -> show counts only   // per associate, per day, set on each drive
+const staffDayTarget = (st, d) => Math.round(driveStaffTarget(d) * (st.type === "Part-timer" ? PT_FACTOR : 1));   // legacy fallback (drives with no targets set)
+const unitFor = t => t === "Amount" ? "₹" : t === "Weight" ? "Kg" : "Pcs";
+const round1 = n => Math.round(n * 10) / 10;
+const qt = (a, t) => t > 0 ? `${a}/${t}` : `${a}`;                        // 16/30, or just 16 when no target is set
+const qtU = (unit, a, t) => t > 0 ? (unit === "₹" ? `₹${a.toLocaleString()}/${t.toLocaleString()}` : `${a}/${t} ${unit}`) : formatValue(unit, a);
+const staffWeight = st => st.type === "Part-timer" ? PT_FACTOR : 1;
+const WEEKEND_DAYS = [0, 6];                                              // Sunday, Saturday
+const dayKind = date => WEEKEND_DAYS.includes(new Date(date + "T00:00:00").getDay()) ? "weekend" : "weekday";
+function targetRule(drive, date) {                                        // date override > weekend/weekday > weekday
+  const t = drive && drive.targets;
+  if (!t) return null;
+  return (t.dates && t.dates[date]) || t[dayKind(date)] || t.weekday || null;
+}
+function ruleSectionTargets(rule, drive) {                                // {dept: target for that section on that day}
+  const depts = driveDepts(drive), secs = rule.sections || {};
+  const out = {};
+  if (depts.some(d => Number(secs[d]) > 0)) { depts.forEach(d => out[d] = Number(secs[d]) || 0); return out; }
+  depts.forEach(d => out[d] = 0);                                         // only a store total: departments / associates show counts only
+  return out;
+}
+function ruleStoreTotal(rule, drive) {
+  const secs = rule.sections || {}, depts = driveDepts(drive);
+  return depts.some(d => Number(secs[d]) > 0) ? depts.reduce((n, d) => n + (Number(secs[d]) || 0), 0) : (Number(rule.total) || 0);
+}
+function storeTargetOver(drive, dates) {                                  // overall store target (store total, or sum of section targets)
+  return round1(dates.reduce((n, dt) => {
+    const r = targetRule(drive, dt);
+    if (r) return n + ruleStoreTotal(r, drive);
+    return n + state.staffList.filter(s => driveDepts(drive).includes(s.dept)).reduce((m, s) => m + staffDayTarget(s, drive), 0);
+  }, 0));
+}
+function staffTargetOn(st, drive, date) {                                 // one associate, one day
+  const rule = targetRule(drive, date);
+  if (!rule) return staffDayTarget(st, drive);
+  if (!driveDepts(drive).includes(st.dept)) return 0;
+  const secT = ruleSectionTargets(rule, drive)[st.dept] || 0;
+  const wDept = state.staffList.filter(s => s.dept === st.dept).reduce((n, s) => n + staffWeight(s), 0);
+  return wDept ? secT * staffWeight(st) / wDept : 0;
+}
+const staffTargetOver = (st, drive, dates) => round1(dates.reduce((n, dt) => n + staffTargetOn(st, drive, dt), 0));
+function driveDates(drive) {                                              // campaign days so far + any day with entries
+  const end = drive.endDate && drive.endDate < TODAY_DATE ? drive.endDate : TODAY_DATE;
+  const start = drive.startDate && drive.startDate <= end ? drive.startDate : end;
+  const s = new Set(getDateRange(start, end));
+  state.entries.forEach(e => { if (e.driveId === drive.id && e.date) s.add(e.date); });
+  return [...s].sort();
+}
+function targetSummary(d) {
+  const t = d.targets, n = t && t.dates ? Object.keys(t.dates).length : 0;
+  if (!t || (!t.weekday && !t.weekend && !n)) return "No targets set – showing counts only";
+  const parts = [];
+  if (t.weekday) parts.push(`Weekday ${formatValue(d.unit, round1(ruleStoreTotal(t.weekday, d)))}`);
+  if (t.weekend) parts.push(`Weekend ${formatValue(d.unit, round1(ruleStoreTotal(t.weekend, d)))}`);
+  if (n) parts.push(`${n} date override${n > 1 ? "s" : ""}`);
+  return "Store target / day: " + parts.join(" • ");
+}
+const typeLabel = t => t === "Regular" ? "Staff" : t;
+const driveDepts = d => { const l = (d && d.depts ? d.depts : []).filter(x => DEPARTMENTS.includes(x)); return l.length ? l : DEPARTMENTS; };
+const deptsText = d => driveDepts(d).length === DEPARTMENTS.length ? "All sections" : driveDepts(d).join(", ");
+let newDriveDepts = new Set(DEPARTMENTS);
+function renderDeptChips(containerId, set, onChange) {
+  const wrap = document.getElementById(containerId);
+  const base = "px-2.5 py-1 rounded-lg text-[11px] font-bold transition ";
+  const on = "bg-emerald-500 text-slate-950", off = "bg-slate-800 text-slate-300 hover:bg-slate-700";
+  const all = DEPARTMENTS.every(d => set.has(d));
+  wrap.innerHTML = `<button type="button" data-all="1" class="${base}${all ? "bg-amber-500 text-slate-950" : off}">Select All</button>` +
+    DEPARTMENTS.map(d => `<button type="button" data-d="${d}" class="${base}${set.has(d) ? on : off}">${d}</button>`).join("");
+  wrap.querySelectorAll("button").forEach(b => b.onclick = () => {
+    if (b.dataset.all) { if (all) set.clear(); else DEPARTMENTS.forEach(d => set.add(d)); }
+    else if (set.has(b.dataset.d)) set.delete(b.dataset.d); else set.add(b.dataset.d);
+    renderDeptChips(containerId, set, onChange);
+    if (onChange) onChange();
+  });
+}
+
+/* ======================================================================
+   STATE (persisted in JS, reset on reload)
+   ====================================================================== */
+const state = {
+  activeTab: "entry",
+  selectedDashDriveId: "all",
+  dashDatePreset: "last7",
+  customDashDate: YESTERDAY_DATE,
+  multiSelectedDates: [YESTERDAY_DATE, TODAY_DATE],
+  selectedDashDept: "All",
+  dashEventDropdown: "all",
+  compareEnabled: false,
+  comparePreset: "prevDay",
+  compareCustomDate: getDateOffset(YESTERDAY_DATE, -1),
+
+  staffList: [],
+
+  drives: [],
+
+  entries: [],
+
+  // Entry-session state
+  currentStaff: null,
+  lastEntry: null,
+  undoTimer: 0,
+  biometricStatus: "",
+
+  // Reports filter state
+  reportDriveId: null,
+  reportDept: "All",
+  reportDate: TODAY_DATE,
+  reportSortMode: "achieved_desc",
+  trackerDeptOverride: "PF",
+  lowestDept: "All",
+  rankSort: { key: "achieved", dir: "desc" },
+  rankDept: "All",
+
+  // Confirm modal pending
+  pendingConfirm: null,
+
+  // Party burst key
+  burstKey: 1,
+
+  // Inspection modal target
+  inspectedStaff: null
+};
+
+state.topSortMode = "achieved";
+state.reportType = "All";
+if (LIVE) { state.staffList = []; state.drives = []; state.entries = []; state.reportDriveId = null; }
+
+/* ======================================================================
+   HELPERS
+   ====================================================================== */
+function formatDisplayDate(iso) {
+  if (!iso || !iso.includes("-")) return iso || "";
+  const [y, m, d] = iso.split("-");
+  return `${d}/${m}/${y}`;
+}
+function formatShortDate(iso) {
+  if (!iso || !iso.includes("-")) return iso || "";
+  const [, m, d] = iso.split("-");
+  return `${d}/${m}`;
+}
+function getDaysBetween(s, e) {
+  const start = new Date(`${s}T00:00:00`);
+  const end = new Date(`${e}T00:00:00`);
+  return Math.max(0, Math.round((end - start) / 86400000));
+}
+function getDateOffset(iso, days) {
+  const d = new Date(`${iso}T00:00:00`);
+  d.setDate(d.getDate() + days);
+  return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+}
+function getDateRange(s, e) {
+  const out = [];
+  let cur = s, guard = 0;
+  while (cur <= e && guard < 400) {
+    out.push(cur);
+    cur = getDateOffset(cur, 1);
+    guard++;
+  }
+  return out;
+}
+function money(v) {
+  return v >= 1000 ? `${(v / 1000).toFixed(1)}k` : `${v}`;
+}
+function formatValue(unit, v) {
+  return unit === "₹" ? `₹${v.toLocaleString()}` : `${v} ${unit}`;
+}
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+}
+
+/* ======================================================================
+   GOOGLE SHEET SYNC
+   ====================================================================== */
+let pending = 0, writeSeq = 0, queue = Promise.resolve();
+const QUEUEABLE = new Set(["addEntry", "deleteEntry", "saveStaff", "deleteStaff", "updateDrive", "deleteDrive"]);
+const OUTBOX_KEY = "smartdrive_outbox_v1", SESSION_KEY = "smartdrive_session_v1";
+function readOutbox() { try { return JSON.parse(localStorage.getItem(OUTBOX_KEY) || "[]"); } catch (_) { return []; } }
+function writeOutbox(a) { try { localStorage.setItem(OUTBOX_KEY, JSON.stringify(a)); } catch (_) {} }
+function sessionCutoff(from) {                         // next 11:00 PM after "from"
+  const c = new Date(from); c.setHours(23, 0, 0, 0);
+  if (from >= c.getTime()) c.setDate(c.getDate() + 1);
+  return c.getTime();
+}
+function saveSession() {
+  try {
+    if (state.currentStaff) localStorage.setItem(SESSION_KEY, JSON.stringify({ staff: state.currentStaff, exp: state.sessionExp }));
+    else localStorage.removeItem(SESSION_KEY);
+  } catch (_) {}
+}
+function loadSession() {
+  try {
+    const raw = JSON.parse(localStorage.getItem(SESSION_KEY) || "null");
+    if (!raw) return null;
+    const staff = raw.staff || raw;                      // older saved format = staff object only
+    const exp = raw.exp || sessionCutoff(Date.now());
+    if (!staff || !staff.id) return null;
+    if (Date.now() >= exp) { localStorage.removeItem(SESSION_KEY); return null; }
+    state.sessionExp = exp;
+    return staff;
+  } catch (_) { return null; }
+}
+function checkSessionExpiry() {                        // automatic logout at 11:00 PM
+  if (state.currentStaff && state.sessionExp && Date.now() >= state.sessionExp) {
+    state.currentStaff = null; state.lastEntry = null; state.undoTimer = 0; state.biometricStatus = "";
+    saveSession(); renderSession();
+    showNotice("Logged out", "Your session ended at 11:00 PM. Please log in again tomorrow.");
+  }
+}
+function revalidateSession() {
+  if (!LIVE || !state.currentStaff) return;
+  const fresh = state.staffList.find(s => s.id === state.currentStaff.id);
+  if (fresh) { state.currentStaff = fresh; saveSession(); }
+  else if (state.staffList.length) { state.currentStaff = null; saveSession(); }   // staff was deleted
+}
+function localToday() { return new Date().toLocaleDateString("en-CA"); }
+async function flushOutbox() {                       // retry writes that failed (offline / weak wifi)
+  const box = readOutbox();
+  if (!box.length) return true;
+  writeOutbox([]);
+  for (let i = 0; i < box.length; i++) {
+    const r = await api(box[i].action, box[i].payload);
+    if (r.queued) { writeOutbox([...readOutbox(), ...box.slice(i + 1)]); return false; }
+  }
+  return true;
+}
+function setSync(t) {
+  document.getElementById("headerSubtitle").textContent =
+    `Live Campaign & Floor Tracker • ${formatDisplayDate(TODAY_DATE)} • ${t}`;
+}
+function api(action, payload = {}) {
+  if (!LIVE) return Promise.resolve({ ok: true, local: true });
+  const run = async () => {
+    try {
+      const r = await fetch(API_URL, { method: "POST", body: JSON.stringify({ token: API_TOKEN, action, ...payload }) });
+      const j = await r.json();
+      if (!j.ok && j.error !== "DUPLICATE") { const se = new Error(j.error || "Server error"); se.server = true; throw se; }
+      if (action !== "getAll") setSync(j.ok ? "Synced ✓" : "Not saved");
+      return j;
+    } catch (err) {
+      console.error(err);
+      if (!err.server && QUEUEABLE.has(action)) {
+        writeOutbox([...readOutbox(), { action, payload }]);
+        setSync("⚠ Can't reach Google Sheet – will retry (" + String(err.message || err).slice(0, 40) + ")");
+        return { ok: false, queued: true, error: String(err.message || err) };
+      }
+      setSync("⚠ Sync failed: " + String(err.message || err).slice(0, 60));
+      return { ok: false, error: String(err.message || err) };
+    } finally { pending--; }
+  };
+  pending++;
+  if (action === "getAll") return run();
+  writeSeq++; setSync("Saving…");
+  queue = queue.then(run, run);          // writes run in order (add → undo safe)
+  return queue;
+}
+async function loadFromSheet() {
+  const s = writeSeq;
+  const j = await api("getAll");
+  if (!j.ok || j.local || s !== writeSeq || pending > 0) return false;   // skip if a write happened meanwhile
+  state.staffList = j.staff; state.drives = j.drives; state.entries = j.entries;
+  revalidateSession();
+  if (!state.drives.some(d => d.id === state.reportDriveId)) state.reportDriveId = state.drives[0]?.id ?? null;
+  if (state.selectedDashDriveId !== "all" && !state.drives.some(d => d.id === state.selectedDashDriveId)) {
+    state.selectedDashDriveId = "all"; state.dashEventDropdown = "all";
+  }
+  setSync("Synced ✓");
+  return true;
+}
+function refreshAll() {
+  const loggedIn = !document.getElementById("sessionPanel").classList.contains("hidden");
+  if (loggedIn !== !!state.currentStaff) renderSession();
+  else if (!state.currentStaff) { renderLoginSelect(); renderLoginPreview(); }
+  else renderMyStats();
+  if (state.activeTab === "reports") renderReports();
+  if (state.activeTab === "manager") renderManager();
+}
+function sheetNameFor(name, startDate) { return `${startDate.slice(0, 7)} ${name}`; }
+function driveKey(name, startDate) {
+  return startDate.slice(0, 7) + "|" + name.toLowerCase().replace(/[^a-z0-9\u0d00-\u0d7f]/g, "");
+}
+function showNotice(title, html) {
+  document.getElementById("dupTitle").textContent = title;
+  document.getElementById("dupText").innerHTML = html;
+  document.getElementById("dupModal").classList.remove("hidden");
+}
+function showDuplicate(d) {
+  showNotice("⚠ Duplicate Drive",
+    `<strong>${escapeHtml(d.name)}</strong> already exists for this month (sheet: <strong>${escapeHtml(d.sheetName || sheetNameFor(d.name, d.startDate))}</strong>).<br><br>
+     Don't create it again – for the next weekend just pick the same drive in <strong>Floor Entry</strong> and set the entry date.`);
+}
+
+/* ======================================================================
+   THEME
+   ====================================================================== */
+function getDriveTheme(drive) {
+  const color = drive?.color || "emerald";
+  if (color === "indigo") {
+    return {
+      badge: "bg-indigo-950 text-indigo-300 border-indigo-700/70",
+      banner: "from-indigo-950/90 via-slate-900 to-slate-800 border-indigo-700/60",
+      bar: "from-indigo-500 to-sky-400",
+      accentText: "text-indigo-400",
+      pillActive: "bg-indigo-600 text-white shadow-lg shadow-indigo-950/60"
+    };
+  }
+  if (color === "amber") {
+    return {
+      badge: "bg-amber-950 text-amber-300 border-amber-700/70",
+      banner: "from-amber-950/80 via-slate-900 to-slate-800 border-amber-700/60",
+      bar: "from-amber-500 to-yellow-400",
+      accentText: "text-amber-400",
+      pillActive: "bg-amber-600 text-white shadow-lg shadow-amber-950/60"
+    };
+  }
+  return {
+    badge: "bg-emerald-950 text-emerald-300 border-emerald-700/70",
+    banner: "from-emerald-950/90 via-slate-900 to-slate-800 border-emerald-700/60",
+    bar: "from-emerald-500 to-teal-400",
+    accentText: "text-emerald-400",
+    pillActive: "bg-emerald-600 text-white shadow-lg shadow-emerald-950/60"
+  };
+}
+
+/* ======================================================================
+   TOAST
+   ====================================================================== */
+function triggerToast(staffName, valueNum, unit, driveName) {
+  const layer = document.getElementById("toastLayer");
+  const formattedVal = unit === "₹" ? `+₹${valueNum.toLocaleString()}` : `+${valueNum} ${unit}`;
+  const el = document.createElement("div");
+  el.className = "animate-raindrop-toast flex items-center gap-2 text-xs drop-shadow-[0_2px_6px_rgba(0,0,0,0.9)]";
+  el.style.opacity = "0.7";
+  el.innerHTML = `
+    <svg class="w-3.5 h-3.5 text-amber-400 shrink-0" fill="currentColor" viewBox="0 0 24 24"><path d="M13 2L3 14h8l-1 8 10-12h-8l1-8z"/></svg>
+    <span class="font-bold text-white">${escapeHtml(staffName)}</span>
+    <span class="font-extrabold text-emerald-300">${escapeHtml(formattedVal)}</span>
+    <span class="text-slate-200">• ${escapeHtml(driveName)}</span>`;
+  layer.appendChild(el);
+  // Keep only last 4 toasts
+  while (layer.children.length > 4) layer.removeChild(layer.firstChild);
+  setTimeout(() => el.remove(), 2600);
+}
+
+/* ======================================================================
+   NAVIGATION
+   ====================================================================== */
+document.querySelectorAll(".tab-btn").forEach(btn => {
+  btn.addEventListener("click", () => {
+    const tab = btn.dataset.tab;
+    if (tab === "manager" && !managerUnlocked) { openLock(); return; }
+    state.activeTab = tab;
+    document.querySelectorAll(".tab-btn").forEach(b => {
+      b.classList.remove("bg-emerald-500", "text-slate-950", "shadow-sm");
+      b.classList.add("text-slate-400", "hover:text-white");
+    });
+    btn.classList.add("bg-emerald-500", "text-slate-950", "shadow-sm");
+    btn.classList.remove("text-slate-400", "hover:text-white");
+    document.querySelectorAll(".tab-panel").forEach(p => p.classList.add("hidden"));
+    document.getElementById(`tab-${tab}`).classList.remove("hidden");
+    if (tab === "reports") {
+      state.reportDate = TODAY_DATE;                       // Reports always opens on today
+      state.burstKey++;
+      renderReports();
+      fireParty();
+    }
+    if (tab === "manager") renderManager();
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  });
+});
+
+/* ======================================================================
+   FLOOR ENTRY
+   ====================================================================== */
+function renderLoginSelect() {                              // searchable name list (type to filter)
+  const input = document.getElementById("loginSearch"), hid = document.getElementById("loginStaffSelect");
+  if (hid.value && !state.staffList.some(s => s.id === hid.value)) { hid.value = ""; input.value = ""; }
+  if (!document.getElementById("loginList").classList.contains("hidden")) showLoginList();
+}
+function showLoginList() {
+  const input = document.getElementById("loginSearch"), hid = document.getElementById("loginStaffSelect"), list = document.getElementById("loginList");
+  const q = hid.value ? "" : input.value.trim().toLowerCase();       // a chosen name shows the full list again
+  const items = state.staffList.filter(s => !q || (s.name + " " + s.dept + " " + (s.mobile || "")).toLowerCase().includes(q))
+    .sort((a, b) => a.name.localeCompare(b.name));
+  list.innerHTML = items.length
+    ? items.map(s => `<li data-id="${escapeHtml(s.id)}" class="login-item px-4 py-3 text-base text-white hover:bg-slate-800 active:bg-emerald-600 cursor-pointer border-b border-slate-800 last:border-b-0 flex justify-between gap-2"><span>${escapeHtml(s.name)}</span><span class="text-slate-400 text-sm">${escapeHtml(s.dept)}</span></li>`).join("")
+    : `<li class="px-4 py-3 text-sm text-slate-400">No matching name</li>`;
+  list.classList.remove("hidden");
+}
+function pickLoginStaff(id) {
+  const s = state.staffList.find(x => x.id === id); if (!s) return;
+  document.getElementById("loginStaffSelect").value = s.id;
+  document.getElementById("loginSearch").value = s.name;
+  document.getElementById("loginList").classList.add("hidden");
+  document.getElementById("authError").classList.add("hidden");
+  renderLoginPreview();
+}
+(function initLoginSearch() {
+  const input = document.getElementById("loginSearch"), hid = document.getElementById("loginStaffSelect"), list = document.getElementById("loginList");
+  input.addEventListener("focus", () => { input.select(); showLoginList(); });
+  input.addEventListener("input", () => { hid.value = ""; renderLoginPreview(); showLoginList(); });
+  input.addEventListener("keydown", e => {
+    if (e.key === "Enter" && !list.classList.contains("hidden")) {
+      const first = list.querySelector(".login-item");
+      if (first && !hid.value) { e.preventDefault(); pickLoginStaff(first.dataset.id); }
+    }
+  });
+  list.addEventListener("mousedown", e => {                          // mousedown so the box doesn't lose focus first
+    const li = e.target.closest(".login-item"); if (!li) return;
+    e.preventDefault(); pickLoginStaff(li.dataset.id);
+  });
+  list.addEventListener("touchend", e => {
+    const li = e.target.closest(".login-item"); if (!li) return;
+    e.preventDefault(); pickLoginStaff(li.dataset.id);
+  });
+  document.addEventListener("click", e => { if (e.target !== input && !list.contains(e.target)) list.classList.add("hidden"); });
+})();
+
+function renderEntryDriveSelect() {
+  const sel = document.getElementById("entryDriveSelect");
+  sel.innerHTML = `<option value="">-- Choose Active Drive --</option>` + state.drives.filter(d => d.active).map(d =>
+    `<option value="${d.id}">${escapeHtml(d.name)} (${d.unit} • ${d.type})</option>`
+  ).join("");
+  // Default to first active drive if not set
+  if (state.drives.filter(d => d.active).length) {
+    sel.value = String(state.drives.find(d => d.active).id);
+  }
+  renderQuickAdd();
+}
+
+function renderTargetDeptSelect(drive) {
+  const sel = document.getElementById("targetDept");
+  const list = drive ? driveDepts(drive) : DEPARTMENTS;
+  const prev = sel.value;
+  sel.innerHTML = list.map(d => `<option>${d}</option>`).join("");
+  sel.value = list.includes(prev) ? prev
+    : (state.currentStaff && list.includes(state.currentStaff.dept) ? state.currentStaff.dept : list[0]);
+}
+
+function renderQuickAdd() {
+  const wrap = document.getElementById("quickAddWrap");
+  const grid = document.getElementById("quickAddGrid");
+  const label = document.getElementById("quickAddLabel");
+  const selVal = document.getElementById("entryDriveSelect").value;
+  const drive = state.drives.find(d => d.id === Number(selVal));
+  renderTargetDeptSelect(drive);
+  if (!drive) { wrap.classList.add("hidden"); return; }
+  wrap.classList.remove("hidden");
+  label.textContent = `One-Tap Quick Add (${drive.unit})`;
+  const steps = drive.type === "Count" ? [1, 2, 5] : drive.type === "Weight" ? [1, 5, 10] : [500, 1000, 2000];
+  grid.innerHTML = steps.map(v => `
+    <button data-quick="${v}" class="quick-add-btn bg-slate-800 hover:bg-emerald-500 hover:text-slate-950 active:bg-emerald-500 active:text-slate-950 border border-slate-700 text-white font-extrabold py-4 rounded-xl text-lg transition">
+      +${drive.unit === "₹" ? "₹" + v : v}
+    </button>
+  `).join("");
+  grid.querySelectorAll(".quick-add-btn").forEach(b => {
+    b.addEventListener("click", () => submitEntry(drive, Number(b.dataset.quick)));
+  });
+}
+
+/* ---------- "how many have I done": today + previous days, per active drive ---------- */
+const nowDate = () => LIVE ? localToday() : TODAY_DATE;
+const fmtVal = (unit, n) => unit === "₹" ? "₹" + Math.round(n).toLocaleString() : String(round1(n));
+function staffStatsRows(staffId) {
+  const st = state.staffList.find(s => s.id === staffId), today = nowDate();
+  return state.drives.filter(d => d.active).map(d => {
+    const mine = state.entries.filter(e => e.driveId === d.id && e.staffId === staffId);
+    const t = mine.filter(e => e.date === today).reduce((n, e) => n + e.value, 0);
+    const prev = mine.filter(e => e.date < today).reduce((n, e) => n + e.value, 0);
+    return { drive: d, today: t, prev, total: t + prev, tgt: st ? round1(staffTargetOn(st, d, today)) : 0 };
+  });
+}
+function statsCardsHTML(staffId) {
+  const rows = staffStatsRows(staffId);
+  if (!rows.length) return `<p class="text-xs text-slate-500 text-center py-2">No active drive right now.</p>`;
+  return rows.map(r => {
+    const u = r.drive.unit;
+    return `<div class="rounded-xl bg-slate-950 border border-slate-800 p-3">
+      <p class="text-sm font-bold text-white">${escapeHtml(r.drive.name)} <span class="text-slate-500 font-normal text-xs">(${escapeHtml(u)})</span></p>
+      <div class="grid grid-cols-3 gap-2 mt-2 text-center">
+        <div><p class="text-[11px] text-slate-400">Today</p><p class="text-lg font-extrabold font-mono text-emerald-400">${r.tgt > 0 ? fmtVal(u, r.today) + "/" + fmtVal(u, r.tgt) : fmtVal(u, r.today)}</p></div>
+        <div><p class="text-[11px] text-slate-400">Previous days</p><p class="text-lg font-extrabold font-mono text-slate-200">${fmtVal(u, r.prev)}</p></div>
+        <div><p class="text-[11px] text-slate-400">Total</p><p class="text-lg font-extrabold font-mono text-amber-300">${fmtVal(u, r.total)}</p></div>
+      </div></div>`;
+  }).join("");
+}
+function renderMyStats() {
+  const el = document.getElementById("myStats");
+  el.innerHTML = state.currentStaff ? `<p class="text-xs font-semibold text-slate-400 px-1">My count</p>` + statsCardsHTML(state.currentStaff.id) : "";
+}
+function renderLoginPreview() {                         // shown as soon as a name is picked, before starting the shift
+  const el = document.getElementById("loginPreview"), st = state.staffList.find(s => s.id === document.getElementById("loginStaffSelect").value);
+  if (!st) { el.classList.add("hidden"); el.innerHTML = ""; return; }
+  el.innerHTML = `<p class="text-xs font-semibold text-slate-400">${escapeHtml(st.name)} – count so far</p>` + statsCardsHTML(st.id);
+  el.classList.remove("hidden");
+}
+
+function renderSession() {
+  const loginCard = document.getElementById("loginCard");
+  const sessionPanel = document.getElementById("sessionPanel");
+  if (state.currentStaff) {
+    loginCard.classList.add("hidden");
+    sessionPanel.classList.remove("hidden");
+    document.getElementById("sessionName").textContent = `Active Shift: ${state.currentStaff.name}`;
+    document.getElementById("sessionMeta").textContent =
+      `${state.currentStaff.dept} Dept • ${typeLabel(state.currentStaff.type)}`;
+    const bs = document.getElementById("bioStatus");
+    if (state.biometricStatus) {
+      bs.textContent = state.biometricStatus;
+      bs.classList.remove("hidden");
+    } else bs.classList.add("hidden");
+    document.getElementById("entryDate").value = TODAY_DATE;
+    document.getElementById("targetDept").value = state.currentStaff.dept;
+    document.getElementById("entryDateText").textContent = formatDisplayDate(TODAY_DATE);
+    document.getElementById("entryDeptText").textContent = state.currentStaff.dept;
+    renderEntryDriveSelect();
+    renderMyStats();
+  } else {
+    loginCard.classList.remove("hidden");
+    sessionPanel.classList.add("hidden");
+    renderLoginSelect();
+    renderLoginPreview();
+  }
+  renderUndo();
+}
+
+function renderUndo() {
+  const banner = document.getElementById("undoBanner");
+  const text = document.getElementById("undoText");
+  if (state.undoTimer > 0 && state.lastEntry) {
+    banner.classList.remove("hidden");
+    text.innerHTML = `Logged <strong>${state.lastEntry.value}</strong> to <strong>${state.lastEntry.targetDept}</strong> (${formatShortDate(state.lastEntry.date)}). Undo available for <strong>${state.undoTimer}s</strong>`;
+  } else {
+    banner.classList.add("hidden");
+  }
+}
+
+/* ======================================================================
+   ENTRY SUBMISSION
+   ====================================================================== */
+function submitEntry(drive, value) {
+  if (!state.currentStaff || !drive || !value || value <= 0) return;
+  if (!driveDepts(drive).includes(state.currentStaff.dept)) {
+    showNotice("Not allowed", `<strong>${escapeHtml(drive.name)}</strong> is open only for: ${escapeHtml(driveDepts(drive).join(", "))}.<br><br>Your section (${escapeHtml(state.currentStaff.dept)}) is not part of this drive.`);
+    return;
+  }
+  if ((drive.type === "Count" && value > 5) || (drive.type === "Amount" && value > 2000) || (drive.type === "Weight" && value > 50)) {
+    state.pendingConfirm = { drive, value };
+    const modal = document.getElementById("confirmModal");
+    const text = document.getElementById("confirmText");
+    text.innerHTML = `You are logging <span class="font-extrabold text-amber-300">${drive.unit === "₹" ? "₹" + value.toLocaleString() : value + " " + drive.unit}</span> for <strong>${escapeHtml(drive.name)}</strong>. Please confirm.`;
+    modal.classList.remove("hidden");
+    return;
+  }
+  executeEntrySave(drive, value);
+}
+
+function executeEntrySave(drive, value) {
+  const entryDate = LIVE ? localToday() : TODAY_DATE;      // fixed: today
+  const targetDept = state.currentStaff.dept;               // fixed: the associate's own section
+  const newRecord = {
+    id: Date.now(),
+    driveId: drive.id,
+    staffId: state.currentStaff.id,
+    staffName: state.currentStaff.name,
+    staffDept: state.currentStaff.dept,
+    targetDept,
+    value,
+    date: entryDate,
+    timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+  };
+  state.entries.unshift(newRecord);
+  api("addEntry", { driveId: drive.id, entry: newRecord });
+  state.lastEntry = newRecord;
+  state.undoTimer = 60;
+  document.getElementById("customValue").value = "";
+  triggerToast(state.currentStaff.name, value, drive.unit, drive.name);
+  renderUndo();
+  renderAuditLogs();
+  renderMyStats();
+  startUndoCountdown();
+  document.getElementById("confirmModal").classList.add("hidden");
+  state.pendingConfirm = null;
+}
+
+let undoInterval = null;
+function startUndoCountdown() {
+  if (undoInterval) clearInterval(undoInterval);
+  undoInterval = setInterval(() => {
+    if (state.undoTimer <= 0) { clearInterval(undoInterval); renderUndo(); return; }
+    state.undoTimer--;
+    renderUndo();
+  }, 1000);
+}
+
+function handleUndo() {
+  if (!state.lastEntry) return;
+  api("deleteEntry", { driveId: state.lastEntry.driveId, id: state.lastEntry.id });
+  state.entries = state.entries.filter(e => e.id !== state.lastEntry.id);
+  state.lastEntry = null;
+  state.undoTimer = 0;
+  if (undoInterval) clearInterval(undoInterval);
+  renderUndo();
+  renderAuditLogs();
+  renderMyStats();
+}
+
+/* ======================================================================
+   LOGIN
+   ====================================================================== */
+document.getElementById("loginForm").addEventListener("submit", e => {
+  e.preventDefault();
+  let staffId = document.getElementById("loginStaffSelect").value;
+  const errEl = document.getElementById("authError");
+  if (!staffId) {                                                    // typed the full name without tapping the list
+    const typed = document.getElementById("loginSearch").value.trim().toLowerCase();
+    const hits = typed ? state.staffList.filter(s => s.name.toLowerCase() === typed) : [];
+    if (hits.length === 1) staffId = hits[0].id;
+  }
+  const chosen = state.staffList.find(s => s.id === staffId);
+  if (!chosen) { errEl.textContent = "Please select your name from the list."; errEl.classList.remove("hidden"); return; }
+  state.currentStaff = chosen;
+  state.sessionExp = sessionCutoff(Date.now());
+  state.biometricStatus = "";
+  errEl.classList.add("hidden");
+  document.getElementById("loginSearch").value = "";
+  document.getElementById("loginStaffSelect").value = "";
+  saveSession();
+  renderSession();
+});
+
+document.getElementById("endShiftBtn").addEventListener("click", () => {
+  state.currentStaff = null;
+  state.biometricStatus = "";
+  state.lastEntry = null;
+  state.undoTimer = 0;
+  saveSession();
+  renderSession();
+});
+
+document.getElementById("undoBtn").addEventListener("click", handleUndo);
+
+document.getElementById("entryDriveSelect").addEventListener("change", () => {
+  renderQuickAdd();
+});
+
+document.getElementById("submitCustom").addEventListener("click", () => {
+  const selVal = document.getElementById("entryDriveSelect").value;
+  const drive = state.drives.find(d => d.id === Number(selVal));
+  const val = Number(document.getElementById("customValue").value);
+  if (drive && val > 0) submitEntry(drive, val);
+});
+
+/* ======================================================================
+   CONFIRM MODAL
+   ====================================================================== */
+document.getElementById("confirmCancel").addEventListener("click", () => {
+  document.getElementById("confirmModal").classList.add("hidden");
+  state.pendingConfirm = null;
+});
+document.getElementById("confirmOk").addEventListener("click", () => {
+  if (state.pendingConfirm) {
+    executeEntrySave(state.pendingConfirm.drive, state.pendingConfirm.value);
+  }
+  document.getElementById("confirmModal").classList.add("hidden");
+});
+
+/* ======================================================================
+   REPORTS
+   ====================================================================== */
+function renderReportPills() {
+  const driveSel = document.getElementById("reportDriveSelect");
+  driveSel.innerHTML = state.drives.map(d => `<option value="${d.id}">${escapeHtml(d.name)}</option>`).join("");
+  if (state.drives.length) driveSel.value = String(state.drives.some(d => d.id === state.reportDriveId) ? state.reportDriveId : state.drives[0].id);
+  driveSel.onchange = () => { state.reportDriveId = Number(driveSel.value); renderReports(); };
+
+  const datePills = document.getElementById("reportDatePills");
+  const dateOpts = [
+    { id: YESTERDAY_DATE, label: formatShortDate(YESTERDAY_DATE) },
+    { id: TODAY_DATE, label: formatShortDate(TODAY_DATE) },
+    { id: "span", label: "Span" }
+  ];
+  datePills.innerHTML = dateOpts.map(o => `
+    <button data-id="${o.id}" class="report-date-pill px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg sm:rounded-xl text-[11px] sm:text-xs font-bold transition ${state.reportDate === o.id ? "bg-amber-500 text-slate-950" : "bg-slate-800 text-slate-300 hover:bg-slate-700"}">${o.label}</button>
+  `).join("");
+  datePills.querySelectorAll(".report-date-pill").forEach(b => {
+    b.addEventListener("click", () => { state.reportDate = b.dataset.id; renderReports(); });
+  });
+
+  const curDrive = state.drives.find(d => d.id === state.reportDriveId) || state.drives[0];
+  const dl = curDrive ? driveDepts(curDrive) : DEPARTMENTS;
+  if (state.reportDept !== "All" && !dl.includes(state.reportDept)) state.reportDept = "All";
+  const deptSel = document.getElementById("reportDeptSelect");
+  deptSel.innerHTML = ["All", ...dl].map(d => `<option value="${escapeHtml(d)}"${state.reportDept === d ? " selected" : ""}>${d === "All" ? "All depts" : escapeHtml(d)}</option>`).join("");
+  deptSel.onchange = () => {
+    state.reportDept = deptSel.value;
+    state.lowestDept = state.rankDept = deptSel.value;             // the card dropdowns follow, and can then be changed on their own
+    if (deptSel.value !== "All") state.trackerDeptOverride = deptSel.value;
+    renderReports();
+  };
+  const typeSel = document.getElementById("reportTypeSelect");
+  typeSel.innerHTML = [["All", "All types"], ...TYPES].map(([v, l]) => `<option value="${v}"${state.reportType === v ? " selected" : ""}>${l}</option>`).join("");
+  typeSel.onchange = () => { state.reportType = typeSel.value; renderReports(); };
+}
+
+function computeReportsData() {
+  const drive = state.drives.find(d => d.id === state.reportDriveId) || state.drives[0];
+  const driveEntries = state.entries.filter(e => {
+    if (e.driveId !== drive.id) return false;
+    if (state.reportDate !== "span" && e.date !== state.reportDate) return false;
+    return true;
+  });
+
+  const dl = driveDepts(drive);
+  const tDates = state.reportDate === "span" ? driveDates(drive) : [state.reportDate];
+
+  const mk = st => {
+    const mine = driveEntries.filter(e => e.staffId === st.id);
+    const achieved = mine.reduce((s, e) => s + e.value, 0);
+    const target = staffTargetOver(st, drive, tDates);
+    const pct = target > 0 ? Math.round((achieved / target) * 100) : 0;
+    return { ...st, achieved, target, pct, entries: mine.length, avg: mine.length ? achieved / mine.length : 0 };
+  };
+  const rankedAll = state.staffList.filter(s => dl.includes(s.dept) && (state.reportType === "All" || s.type === state.reportType)).map(mk);
+  const ranked = rankedAll.filter(s => state.reportDept === "All" || s.dept === state.reportDept);
+
+  const rankDept = (state.rankDept === "All" || dl.includes(state.rankDept)) ? state.rankDept : "All";
+  const sorted = rankedAll.filter(s => rankDept === "All" || s.dept === rankDept).sort((a, b) => {
+    if (state.reportSortMode === "achieved_asc") return a.achieved - b.achieved || a.name.localeCompare(b.name);
+    if (state.reportSortMode === "pct_desc") return b.pct - a.pct || b.achieved - a.achieved;
+    if (state.reportSortMode === "pct_asc") return a.pct - b.pct || a.achieved - b.achieved;
+    return b.achieved - a.achieved || a.name.localeCompare(b.name);
+  });
+
+  const k = state.topSortMode;
+  const top5 = ranked.filter(s => s.achieved > 0)          // zero performers never appear
+    .sort((a, b) => (b[k] - a[k]) || (b.achieved - a.achieved) || a.name.localeCompare(b.name))
+    .slice(0, 5);
+  const lowDept = (state.lowestDept === "All" || dl.includes(state.lowestDept)) ? state.lowestDept : "All";
+  const lowPool = rankedAll.filter(s => lowDept === "All" || s.dept === lowDept);
+  const lowest5 = lowPool.filter(s => s.achieved > 0).sort((a, b) => a.achieved - b.achieved || a.name.localeCompare(b.name)).slice(0, 5);
+  const zeroPerformers = lowPool.filter(s => s.achieved === 0).sort((a, b) => a.name.localeCompare(b.name));
+
+  const deptRankings = dl.map(deptName => {
+    const total = driveEntries.filter(e => (e.targetDept || e.staffDept) === deptName).reduce((s, e) => s + e.value, 0);
+    const deptStaff = state.staffList.filter(s => s.dept === deptName);
+    const deptTarget = round1(deptStaff.reduce((s, st) => s + staffTargetOver(st, drive, tDates), 0));
+    const pct = deptTarget > 0 ? Math.min(100, Math.round((total / deptTarget) * 100)) : 0;
+    return { dept: deptName, total, deptTarget, pct, staffCount: deptStaff.length };
+  }).filter(d => d.total > 0).sort((a, b) => b.total - a.total);
+
+  const tv = state.trackerDeptOverride;
+  const activeTrackerDept = (tv === "All" || dl.includes(tv)) ? tv : (dl[0] || "All");
+  const trackerDateLabel = state.reportDate === "span"
+    ? `${formatDisplayDate(drive.startDate)} - ${formatDisplayDate(TODAY_DATE)}`
+    : formatDisplayDate(state.reportDate);
+  const money = n => drive.unit === "₹" ? "₹" + n.toLocaleString() : n;
+  const totTxt = (a, t) => t > 0 ? `${money(a)}/${money(t)}` : `${money(a)}`;
+  const trackerBlock = staffArr => {                                   // numbered lines + total for one department
+    let total = 0, tgt = 0;
+    const lines = staffArr.map((st, i) => {
+      const achieved = driveEntries.filter(e => e.staffId === st.id).reduce((s, e) => s + e.value, 0);
+      total += achieved;
+      const targetVal = staffTargetOver(st, drive, tDates);
+      tgt += targetVal;
+      const displayName = achieved === 0 ? st.name.toLowerCase() : st.name;
+      return `${i + 1}.${displayName}=${qt(achieved, targetVal)}`;
+    });
+    return { lines, total, tgt: round1(tgt) };
+  };
+  let whatsappText;
+  if (activeTrackerDept === "All") {
+    let grand = 0;
+    const blocks = [];
+    dl.forEach(dep => {
+      const staffArr = state.staffList.filter(s => s.dept === dep);
+      if (!staffArr.length) return;
+      const { lines, total, tgt } = trackerBlock(staffArr);
+      grand += total;
+      blocks.push([`*${dep}*`, ...lines, `${dep} Total = ${totTxt(total, tgt)}`].join("\n"));
+    });
+    whatsappText = [`${drive.name} Tracker All`, ``, `${trackerDateLabel}`, ``, blocks.join("\n\n"), ``, `Grand Total = ${totTxt(grand, storeTargetOver(drive, tDates))}`].join("\n");
+  } else {
+    const { lines, total, tgt } = trackerBlock(state.staffList.filter(s => s.dept === activeTrackerDept));
+    whatsappText = [`${drive.name} Tracker ${activeTrackerDept}`, ``, `${trackerDateLabel}`, ``, ...lines, ``, `Total = ${totTxt(total, tgt)}`].join("\n");
+  }
+
+  const storeTotal = driveEntries.reduce((s, e) => s + e.value, 0);
+  const storeTarget = storeTargetOver(drive, tDates);
+  return { drive, sorted, top5, lowest5, deptRankings, whatsappText, activeTrackerDept, lowDept, zeroPerformers, rankDept, driveEntries, tDates, dl, storeTotal, storeTarget };
+}
+
+function renderReports() {
+  renderReportPills();
+  if (!state.drives.length) {
+    ["topList", "bottomList", "fullRanking", "deptRanking"].forEach(id =>
+      document.getElementById(id).innerHTML = '<p class="text-xs text-slate-500 text-center py-4">Create a drive in Manager first</p>');
+    return;
+  }
+  document.getElementById("reportSort").value = state.reportSortMode;
+  const data = computeReportsData();
+
+  const drive = data.drive;
+  const unit = drive.unit;
+  document.getElementById("storeTotalValue").textContent = qtU(unit, data.storeTotal, data.storeTarget) + (data.storeTarget > 0 ? ` (${Math.round(data.storeTotal / data.storeTarget * 100)}%)` : "");
+  document.getElementById("storeTotalLabel").textContent = `${drive.name} • ${state.reportDate === "span" ? "Entire span" : formatDisplayDate(state.reportDate)}`;
+  document.getElementById("topSubtitle").textContent =
+    `${drive.name} • ${state.reportDept === "All" ? "All Depts" : state.reportDept}`;
+
+  const sortOpts = drive.type !== "Amount"
+    ? [["achieved", drive.type === "Weight" ? "Weight (Kg)" : "Qty (Pcs)"], ["pct", "Goal %"], ["entries", "Entries"], ["avg", "Avg / entry"]]
+    : [["achieved", "Value (₹)"], ["pct", "Goal %"], ["entries", "Entries"], ["avg", "Avg ticket (₹)"]];
+  if (!sortOpts.some(o => o[0] === state.topSortMode)) state.topSortMode = "achieved";
+  const topSel = document.getElementById("topSort");
+  topSel.innerHTML = sortOpts.map(o => `<option value="${o[0]}">${o[1]}</option>`).join("");
+  topSel.value = state.topSortMode;
+  const topSub = st => state.topSortMode === "entries" ? `${st.entries} entries`
+    : state.topSortMode === "avg" ? `avg ${unit === "₹" ? "₹" : ""}${Math.round(st.avg)}/entry`
+    : (st.target > 0 ? `${st.pct}% Goal` : `${st.entries} entries`);
+
+  // Top 5
+  const topList = document.getElementById("topList");
+  const ringClasses = [
+    "border-amber-400", "border-slate-300", "border-amber-600", "border-emerald-400", "border-sky-400"
+  ];
+  const rankBg = ["bg-amber-400 text-slate-950", "bg-slate-300 text-slate-950", "bg-amber-700 text-white", "bg-slate-800 text-emerald-300", "bg-slate-800 text-emerald-300"];
+  topList.innerHTML = data.top5.map((st, i) => {
+    const isFirst = i === 0;
+    return `
+      <div data-staffid="${st.id}" class="top-row flex items-center justify-between p-2.5 sm:p-3 rounded-xl border cursor-pointer transition ${isFirst ? "bg-gradient-to-r from-amber-950/50 via-slate-950 to-emerald-950/30 border-amber-500/70" : "bg-slate-950/90 hover:bg-slate-800/80 border-slate-800"}">
+        <div class="flex items-center gap-2.5 sm:gap-3 min-w-0">
+          <div class="relative w-8 h-8 flex items-center justify-center shrink-0">
+            <span class="animate-ring-spin absolute inset-0 rounded-full border-2 border-dashed ${ringClasses[i] || ringClasses[4]}"></span>
+            <span class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-extrabold ${rankBg[i] || rankBg[4]}">${i + 1}</span>
+          </div>
+          <div class="min-w-0">
+            <div class="flex items-center gap-1.5 flex-wrap">
+              <p class="text-xs font-extrabold text-white truncate">${escapeHtml(st.name)}</p>
+              ${isFirst ? '<span class="text-[9px] bg-amber-500/20 text-amber-300 border border-amber-500/50 px-1.5 py-0.5 rounded font-bold">#1</span>' : ''}
+            </div>
+            <p class="text-[10px] text-slate-400">${escapeHtml(st.dept)} Dept</p>
+          </div>
+        </div>
+        <div class="text-right shrink-0">
+          <p class="text-xs font-mono font-extrabold ${isFirst ? "text-amber-300" : "text-emerald-400"}">${qt(st.achieved, st.target)}</p>
+          <p class="text-[10px] text-slate-400">${topSub(st)}</p>
+        </div>
+      </div>`;
+  }).join("") || `<p class="text-xs text-slate-500 text-center py-4">No sales logged yet</p>`;
+
+  // Lowest 5
+  const bottomList = document.getElementById("bottomList");
+  bottomList.innerHTML = data.lowest5.map((st, i) => `
+    <div data-staffid="${st.id}" class="bottom-row flex items-center justify-between bg-slate-950/90 hover:bg-slate-800/80 border border-slate-800 rounded-xl p-2.5 sm:p-3 cursor-pointer transition">
+      <div class="flex items-center gap-2.5 sm:gap-3 min-w-0">
+        <span class="w-7 h-7 rounded-full bg-rose-950/70 border border-rose-800/70 text-rose-300 text-xs font-extrabold flex items-center justify-center shrink-0">${i + 1}</span>
+        <div class="min-w-0">
+          <div class="flex items-center gap-1.5 flex-wrap">
+            <p class="text-xs font-bold text-white truncate">${escapeHtml(st.name)}</p>
+            </div>
+          <p class="text-[10px] text-slate-400">${escapeHtml(st.dept)} Dept</p>
+        </div>
+      </div>
+      <div class="text-right shrink-0">
+        <p class="text-xs font-mono font-extrabold text-rose-400">${qt(st.achieved, st.target)}</p>
+        <p class="text-[10px] text-slate-400">${st.target > 0 ? st.pct + "% Goal" : st.entries + " entries"}</p>
+      </div>
+    </div>
+  `).join("") || `<p class="text-xs text-slate-500 text-center py-4">No performers with a count in this filter</p>`;
+  const lowSel = document.getElementById("lowestDeptSelect");
+  lowSel.innerHTML = ["All", ...driveDepts(drive)].map(d => `<option value="${escapeHtml(d)}"${d === data.lowDept ? " selected" : ""}>${d === "All" ? "All depts" : escapeHtml(d)}</option>`).join("");
+
+  document.getElementById("zeroCount").textContent = `(${data.zeroPerformers.length})`;
+  document.getElementById("zeroList").innerHTML = data.zeroPerformers.length
+    ? `<table class="w-full text-xs min-w-[300px]"><thead class="bg-slate-950/90"><tr>
+         <th class="px-2 py-2 text-left font-bold text-slate-400">#</th><th class="px-2 py-2 text-left font-bold text-slate-400">Name</th>
+         <th class="px-2 py-2 text-left font-bold text-slate-400">Dept</th><th class="px-2 py-2 text-left font-bold text-slate-400">Type</th>
+         <th class="px-2 py-2 text-right font-bold text-slate-400">Qty${data.zeroPerformers.some(z => z.target > 0) ? " / Target" : ""}</th></tr></thead><tbody>${
+        data.zeroPerformers.map((st, i) => `<tr data-staffid="${escapeHtml(st.id)}" class="border-t border-slate-800 cursor-pointer hover:bg-slate-800/60 transition">
+          <td class="px-2 py-2 text-slate-400 font-bold">${i + 1}</td><td class="px-2 py-2 font-bold text-white whitespace-nowrap">${escapeHtml(st.name)}</td>
+          <td class="px-2 py-2 text-slate-300 whitespace-nowrap">${escapeHtml(st.dept)}</td><td class="px-2 py-2 text-slate-400 whitespace-nowrap">${escapeHtml(typeLabel(st.type))}</td>
+          <td class="px-2 py-2 text-right font-mono font-extrabold text-rose-400">${qt(0, st.target)}</td></tr>`).join("")}</tbody></table>`
+    : `<p class="text-xs text-emerald-400 text-center py-3">No zero performers 🎉</p>`;
+
+  // Full ranking
+  const fullRank = document.getElementById("fullRanking");
+  const rankSel = document.getElementById("fullRankDeptSelect");
+  rankSel.innerHTML = ["All", ...driveDepts(drive)].map(d => `<option value="${escapeHtml(d)}"${d === data.rankDept ? " selected" : ""}>${d === "All" ? "All depts" : escapeHtml(d)}</option>`).join("");
+  document.getElementById("fullRankSubtitle").textContent =
+    `${data.sorted.length} staff • ${data.rankDept === "All" ? "All depts" : data.rankDept} • ${state.reportDate === "span" ? "Entire Span" : formatDisplayDate(state.reportDate)}`;
+  const rankMap = new Map([...data.sorted].sort((x, y) => y.achieved - x.achieved || x.name.localeCompare(y.name)).map((s, i) => [s.id, i + 1]));
+  const rankRows = data.sorted.map(s => ({ ...s, rank: rankMap.get(s.id) }));
+  if (!rankRows.length) {
+    fullRank.innerHTML = `<p class="text-xs text-slate-500 text-center py-4">No staff in this filter</p>`;
+  } else {
+    fullRank.innerHTML = rankTableHTML(rankRows, unit, true);
+  }
+  fullRank.querySelectorAll("th[data-sort]").forEach(th => th.addEventListener("click", () => {
+    const k = th.dataset.sort, cur = state.rankSort;
+    state.rankSort = cur.key === k ? { key: k, dir: cur.dir === "asc" ? "desc" : "asc" }
+                                    : { key: k, dir: ["name", "dept", "type", "rank"].includes(k) ? "asc" : "desc" };
+    renderReports();
+  }));
+
+  // Wire staff clicks
+  document.querySelectorAll("[data-staffid]").forEach(el => {
+    el.addEventListener("click", () => openStaffModal(el.dataset.staffid));
+  });
+
+  // Dept rankings
+  const deptRanking = document.getElementById("deptRanking");
+  deptRanking.innerHTML = data.deptRankings.map((d, i) => `
+    <div data-deptrow="${escapeHtml(d.dept)}" class="space-y-1.5 cursor-pointer rounded-xl p-1.5 -m-1.5 hover:bg-slate-800/50 transition" title="Tap to see employees">
+      <div class="flex items-center justify-between text-xs gap-2">
+        <div class="flex items-center gap-2 min-w-0">
+          <span class="w-5 h-5 rounded-md flex items-center justify-center text-[11px] font-extrabold shrink-0 ${i === 0 ? "bg-emerald-500 text-slate-950" : "bg-slate-800 text-slate-300"}">${i + 1}</span>
+          <span class="font-bold text-white truncate">${escapeHtml(d.dept)}</span>
+          <span class="text-[11px] text-slate-400 whitespace-nowrap">(${d.staffCount})</span>
+        </div>
+        <span class="font-extrabold text-emerald-400 whitespace-nowrap text-right">
+          ${qtU(unit, d.total, d.deptTarget)}
+          ${d.deptTarget > 0 ? `<span class="text-slate-500 font-normal">(${d.pct}%)</span>` : ""}
+        </span>
+      </div>
+      <div class="w-full bg-slate-950 h-2.5 rounded-full overflow-hidden">
+        <div class="bg-gradient-to-r from-emerald-500 to-teal-400 h-2.5 rounded-full transition-all duration-500" style="width: ${d.deptTarget > 0 ? d.pct : Math.round(d.total / Math.max(1, data.deptRankings[0].total) * 100)}%"></div>
+      </div>
+    </div>
+  `).join("");
+
+  deptRanking.querySelectorAll("[data-deptrow]").forEach(el => el.addEventListener("click", () => openDeptModal(el.dataset.deptrow)));
+
+  // Tracker
+  document.getElementById("trackerPre").textContent = data.whatsappText;
+  const trackerSel = document.getElementById("trackerDeptSelect");
+  trackerSel.classList.remove("hidden");
+  trackerSel.innerHTML = ["All", ...driveDepts(drive)].map(d => `<option value="${escapeHtml(d)}"${d === data.activeTrackerDept ? " selected" : ""}>Dept: ${escapeHtml(d)}</option>`).join("");
+}
+
+/* ---------- edit drive ---------- */
+let editDriveFormId = null;
+function openEditDrive(id) {
+  const d = state.drives.find(x => x.id === id); if (!d) return;
+  editDriveFormId = id;
+  const f = document.getElementById("editDriveForm");
+  f.name.value = d.name; f.target.value = d.target; f.startDate.value = d.startDate; f.endDate.value = d.endDate;
+  document.getElementById("editDriveUnit").textContent = d.unit;
+  document.getElementById("editDriveType").textContent = d.type === "Count" ? "Count • Pcs" : d.type === "Amount" ? "Amount • ₹" : "Weight • Kg";
+  showFormError("editDriveError", "");
+  document.getElementById("editDriveModal").classList.remove("hidden");
+}
+document.getElementById("editDriveCancel").addEventListener("click", () => document.getElementById("editDriveModal").classList.add("hidden"));
+document.getElementById("editDriveForm").addEventListener("submit", e => {
+  e.preventDefault();
+  const f = e.target, d = state.drives.find(x => x.id === editDriveFormId); if (!d) return;
+  const name = f.name.value.trim().replace(/\s+/g, " "), target = Number(f.target.value);
+  const startDate = f.startDate.value || d.startDate, endDate = f.endDate.value || d.endDate;
+  if (!name || !(target > 0)) return showFormError("editDriveError", "Drive name and campaign target are required.");
+  if (endDate < startDate) return showFormError("editDriveError", "End date is before the start date.");
+  if (state.drives.some(x => x.id !== d.id && driveKey(x.name, x.startDate) === driveKey(name, startDate)))
+    return showFormError("editDriveError", "Another drive with this name already exists in that month.");
+  Object.assign(d, { name, target, startDate, endDate });
+  api("updateDrive", { id: d.id, name, target, startDate, endDate });
+  document.getElementById("editDriveModal").classList.add("hidden");
+  renderDrivesList(); renderDashboard(); renderEntryDriveSelect(); refreshMgrEntry(); renderReports();
+});
+
+/* ---------- sortable ranking table ---------- */
+const RANK_COLS = [["rank", "#", "r"], ["name", "Name", "l"], ["dept", "Dept", "l"], ["type", "Type", "l"],
+                   ["achieved", "Qty / Target", "r"], ["pct", "Goal %", "r"], ["entries", "Entries", "r"], ["avg", "Avg / entry", "r"]];
+function sortRankRows(rows, key, dir) {
+  const m = dir === "asc" ? 1 : -1;
+  return [...rows].sort((a, b) => {
+    const A = a[key], B = b[key];
+    const c = typeof A === "string" ? A.localeCompare(B) : A - B;
+    return (c * m) || a.name.localeCompare(b.name);
+  });
+}
+function rankTableHTML(rows, unit, showDept) {
+  const cols = RANK_COLS.filter(c => showDept || c[0] !== "dept"), s = state.rankSort;
+  const arrow = k => s.key === k ? (s.dir === "asc" ? " ▲" : " ▼") : "";
+  const money = n => unit === "₹" ? "₹" + Math.round(n).toLocaleString() : String(round1(n));
+  const head = cols.map(([k, l, al]) => `<th data-sort="${k}" class="px-2 py-2 font-bold whitespace-nowrap cursor-pointer select-none hover:text-white ${al === "r" ? "text-right" : "text-left"} ${s.key === k ? "text-emerald-300" : "text-slate-400"}">${l}${arrow(k)}</th>`).join("");
+  const body = sortRankRows(rows, s.key, s.dir).map(st => {
+    const zero = st.achieved === 0;
+    const cell = {
+      rank: `<td class="px-2 py-2 text-slate-400 font-bold">${st.rank}</td>`,
+      name: `<td class="px-2 py-2 font-bold text-white whitespace-nowrap">${escapeHtml(st.name)}${zero ? ' <span class="text-[9px] bg-rose-950 text-rose-400 border border-rose-800/80 px-1.5 py-0.5 rounded font-bold">ZERO</span>' : ""}</td>`,
+      dept: `<td class="px-2 py-2 text-slate-300 whitespace-nowrap">${escapeHtml(st.dept)}</td>`,
+      type: `<td class="px-2 py-2 text-slate-400 whitespace-nowrap">${escapeHtml(typeLabel(st.type))}</td>`,
+      achieved: `<td class="px-2 py-2 text-right font-mono font-extrabold whitespace-nowrap ${zero ? "text-rose-400" : "text-emerald-400"}">${qt(st.achieved, st.target)}</td>`,
+      pct: `<td class="px-2 py-2 text-right font-mono text-slate-200">${st.target > 0 ? st.pct + "%" : "–"}</td>`,
+      entries: `<td class="px-2 py-2 text-right font-mono text-slate-300">${st.entries}</td>`,
+      avg: `<td class="px-2 py-2 text-right font-mono text-slate-300">${st.entries ? money(st.avg) : "–"}</td>`
+    };
+    return `<tr data-staffid="${escapeHtml(st.id)}" class="full-row border-t border-slate-800 cursor-pointer hover:bg-slate-800/60 transition">${cols.map(c => cell[c[0]]).join("")}</tr>`;
+  }).join("");
+  return `<div class="overflow-x-auto"><table class="w-full text-xs min-w-[520px]"><thead class="bg-slate-950/90"><tr>${head}</tr></thead><tbody>${body}</tbody></table></div>`;
+}
+
+/* ---------- department popup: employees, largest to smallest ---------- */
+function openDeptModal(dept) {
+  const data = computeReportsData(), drive = data.drive;
+  const by = {};
+  data.driveEntries.filter(e => (e.targetDept || e.staffDept) === dept).forEach(e => {
+    const o = by[e.staffId] || (by[e.staffId] = { id: e.staffId, name: e.staffName, achieved: 0, entries: 0 });
+    o.achieved += e.value; o.entries++;
+  });
+  Object.values(by).forEach(o => { const cur = state.staffList.find(s => s.id === o.id); if (cur) o.name = cur.name; });
+  const rows = Object.values(by).filter(r => r.achieved > 0).sort((a, b) => b.achieved - a.achieved || a.name.localeCompare(b.name));
+  const total = rows.reduce((n, r) => n + r.achieved, 0);
+  const dateLabel = state.reportDate === "span" ? "Entire span" : formatDisplayDate(state.reportDate);
+  document.getElementById("deptModalTitle").textContent = `${dept} – employees`;
+  document.getElementById("deptModalSub").textContent = `${drive.name} • ${dateLabel} • ${rows.length} with a count • Total ${formatValue(drive.unit, total)}`;
+  document.getElementById("deptModalList").innerHTML = rows.length ? rows.map((r, i) => {
+    const share = total ? Math.round(r.achieved / total * 100) : 0;
+    return `<div class="bg-slate-950 border border-slate-800 rounded-xl p-2.5 space-y-1.5">
+      <div class="flex items-center justify-between gap-2 text-xs">
+        <div class="flex items-center gap-2 min-w-0">
+          <span class="w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-extrabold shrink-0 ${i === 0 ? "bg-emerald-500 text-slate-950" : "bg-slate-800 text-slate-300"}">${i + 1}</span>
+          <span class="font-bold text-white truncate">${escapeHtml(r.name)}</span>
+        </div>
+        <span class="font-mono font-extrabold text-emerald-400 whitespace-nowrap">${formatValue(drive.unit, r.achieved)} <span class="text-slate-500 font-normal">(${share}%)</span></span>
+      </div>
+      <div class="w-full bg-slate-900 h-1.5 rounded-full overflow-hidden"><div class="bg-emerald-500 h-1.5 rounded-full" style="width:${share}%"></div></div>
+    </div>`;
+  }).join("") : `<p class="text-xs text-slate-500 text-center py-4">No counts yet for this department.</p>`;
+  const none = state.staffList.filter(s => s.dept === dept && !by[s.id]).map(s => s.name);
+  const noneEl = document.getElementById("deptModalNone");
+  noneEl.textContent = none.length ? "No count yet: " + none.join(", ") : "";
+  noneEl.classList.toggle("hidden", !none.length);
+  document.getElementById("deptModal").classList.remove("hidden");
+}
+document.getElementById("deptModalClose").addEventListener("click", () => document.getElementById("deptModal").classList.add("hidden"));
+document.getElementById("deptModal").addEventListener("click", e => { if (e.target.id === "deptModal") e.target.classList.add("hidden"); });
+document.getElementById("fullRankDeptSelect").addEventListener("change", e => { state.rankDept = e.target.value; renderReports(); });
+document.getElementById("lowestDeptSelect").addEventListener("change", e => { state.lowestDept = e.target.value; renderReports(); });
+
+document.getElementById("reportSort").addEventListener("change", e => {
+  state.reportSortMode = e.target.value;
+  const [sk, sd] = e.target.value.split("_");
+  state.rankSort = { key: sk, dir: sd };
+  renderReports();
+});
+
+document.getElementById("topSort").addEventListener("change", e => {
+  state.topSortMode = e.target.value;
+  renderReports();
+});
+
+document.getElementById("trackerDeptSelect").addEventListener("change", e => {
+  state.trackerDeptOverride = e.target.value;
+  renderReports();
+});
+
+document.getElementById("copyTrackerBtn").addEventListener("click", async () => {
+  const text = document.getElementById("trackerPre").textContent;
+  try {
+    await navigator.clipboard.writeText(text);
+    const btn = document.getElementById("copyTrackerBtn");
+    const original = btn.innerHTML;
+    btn.innerHTML = `<svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg><span class="text-emerald-400">Copied!</span>`;
+    setTimeout(() => btn.innerHTML = original, 1800);
+  } catch (_) {}
+});
+
+document.getElementById("waBtn").addEventListener("click", () => {
+  const text = document.getElementById("trackerPre").textContent;
+  window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, "_blank");
+});
+
+document.getElementById("partyPopBtn").addEventListener("click", () => {
+  state.burstKey++;
+  fireParty();
+});
+
+function fireParty() {
+  const layer = document.getElementById("partyLayer");
+  const particles = [
+    { tx: "-48px", ty: "-190px", drift: "-18px", fall: "145px", rot: "-145deg", delay: "0ms", type: "ribbon", color: "bg-amber-400" },
+    { tx: "-85px", ty: "-235px", drift: "16px", fall: "175px", rot: "165deg", delay: "20ms", type: "dot", color: "bg-emerald-400" },
+    { tx: "-130px", ty: "-215px", drift: "-22px", fall: "160px", rot: "-195deg", delay: "35ms", type: "ribbon", color: "bg-rose-400" },
+    { tx: "-175px", ty: "-250px", drift: "18px", fall: "185px", rot: "215deg", delay: "10ms", type: "star", color: "#FBBF24" },
+    { tx: "-220px", ty: "-205px", drift: "-14px", fall: "150px", rot: "-155deg", delay: "50ms", type: "ribbon", color: "bg-sky-400" },
+    { tx: "-265px", ty: "-230px", drift: "20px", fall: "170px", rot: "180deg", delay: "30ms", type: "dot", color: "bg-fuchsia-400" },
+    { tx: "-310px", ty: "-195px", drift: "-16px", fall: "145px", rot: "-170deg", delay: "65ms", type: "ribbon", color: "bg-yellow-300" },
+    { tx: "-65px", ty: "-150px", drift: "-15px", fall: "115px", rot: "135deg", delay: "55ms", type: "ribbon", color: "bg-cyan-300" },
+    { tx: "-115px", ty: "-175px", drift: "18px", fall: "135px", rot: "-165deg", delay: "15ms", type: "star", color: "#34D399" },
+    { tx: "-160px", ty: "-160px", drift: "-20px", fall: "125px", rot: "200deg", delay: "70ms", type: "ribbon", color: "bg-emerald-300" },
+    { tx: "-205px", ty: "-175px", drift: "14px", fall: "140px", rot: "-140deg", delay: "40ms", type: "dot", color: "bg-orange-400" },
+    { tx: "-250px", ty: "-155px", drift: "-14px", fall: "120px", rot: "160deg", delay: "80ms", type: "ribbon", color: "bg-violet-400" },
+    { tx: "-295px", ty: "-170px", drift: "16px", fall: "135px", rot: "-185deg", delay: "25ms", type: "star", color: "#F472B6" },
+    { tx: "-38px", ty: "-220px", drift: "12px", fall: "165px", rot: "-180deg", delay: "30ms", type: "dot", color: "bg-lime-300" },
+    { tx: "-145px", ty: "-265px", drift: "-16px", fall: "190px", rot: "225deg", delay: "5ms", type: "ribbon", color: "bg-pink-400" },
+    { tx: "-195px", ty: "-270px", drift: "22px", fall: "195px", rot: "-205deg", delay: "45ms", type: "star", color: "#38BDF8" }
+  ];
+
+  let content = "";
+  content += `<div class="animate-popper-cannon absolute bottom-2.5 right-3">
+    <svg viewBox="0 0 36 36" fill="none" class="w-8 h-8"><path d="M5 31L12.5 11.5L24.5 23.5L5 31Z" fill="#F59E0B" stroke="#FDE68A" stroke-width="1.5" stroke-linejoin="round"/><path d="M8.5 22L16 29.5" stroke="#B45309" stroke-width="2" stroke-linecap="round"/><path d="M11 15.5L20.5 25" stroke="#D97706" stroke-width="2" stroke-linecap="round"/><circle cx="22" cy="8" r="2" fill="#34D399"/><circle cx="29" cy="14" r="2" fill="#F43F5E"/><circle cx="28" cy="6" r="1.5" fill="#38BDF8"/></svg>
+  </div>`;
+
+  particles.forEach(p => {
+    const style = `--tx:${p.tx};--ty:${p.ty};--drift:${p.drift};--fall:${p.fall};--rot:${p.rot};--delay:${p.delay};`;
+    let inner;
+    if (p.type === "star") {
+      inner = `<svg viewBox="0 0 24 24" fill="${p.color}" class="w-3.5 h-3.5"><path d="M12 1L14.8 9.2L23 12L14.8 14.8L12 23L9.2 14.8L1 12L9.2 9.2L12 1Z"/></svg>`;
+    } else if (p.type === "dot") {
+      inner = `<span class="block w-2.5 h-2.5 rounded-full ${p.color}"></span>`;
+    } else {
+      inner = `<span class="block w-2 h-4 rounded-sm ${p.color}"></span>`;
+    }
+    content += `<span class="animate-party-confetti absolute bottom-5 right-6" style="${style}">${inner}</span>`;
+  });
+
+  layer.innerHTML = content;
+  setTimeout(() => { layer.innerHTML = ""; }, 2500);
+}
+
+/* ======================================================================
+   STAFF MODAL
+   ====================================================================== */
+function openStaffModal(staffId) {
+  const st = state.staffList.find(s => s.id === staffId);
+  if (!st) return;
+  const activeDashDrive = state.selectedDashDriveId === "all"
+    ? null
+    : state.drives.find(d => d.id === state.selectedDashDriveId);
+  const driveForModal = activeDashDrive || state.drives.find(d => d.id === state.reportDriveId) || state.drives[0];
+
+  if (!driveForModal) return;
+  const campaignDates = getDateRange(driveForModal.startDate <= TODAY_DATE ? driveForModal.startDate : TODAY_DATE, TODAY_DATE);
+  state.entries.forEach(e => {
+    if (e.driveId === driveForModal.id && e.date && !campaignDates.includes(e.date)) campaignDates.push(e.date);
+  });
+  campaignDates.sort();
+
+  const rows = campaignDates.map(dt => {
+    const achieved = state.entries
+      .filter(e => e.driveId === driveForModal.id && e.staffId === st.id && e.date === dt)
+      .reduce((s, e) => s + e.value, 0);
+    return { date: dt, achieved, isZero: achieved === 0, target: round1(staffTargetOn(st, driveForModal, dt)) };
+  });
+  const totalAchieved = rows.reduce((s, r) => s + r.achieved, 0);
+  const zeroDays = rows.filter(r => r.isZero).length;
+
+  document.getElementById("modalName").textContent = st.name;
+  document.getElementById("modalDept").textContent = st.dept;
+  document.getElementById("modalSubtitle").textContent = `${driveForModal.name}${staffTargetOn(st, driveForModal, TODAY_DATE) > 0 ? ` • Today's target: ${formatValue(driveForModal.unit, round1(staffTargetOn(st, driveForModal, TODAY_DATE)))}` : ""}`;
+  document.getElementById("modalTotal").textContent = driveForModal.unit === "₹"
+    ? `₹${totalAchieved.toLocaleString()}` : `${totalAchieved} ${driveForModal.unit}`;
+  document.getElementById("modalZero").textContent = `${zeroDays} / ${rows.length} Days`;
+
+  document.getElementById("modalRows").innerHTML = rows.map(r => `
+    <div class="flex items-center justify-between p-2.5 rounded-xl border text-xs ${r.isZero ? "bg-rose-950/25 border-rose-800/60" : "bg-slate-950 border-slate-800"}">
+      <div class="flex items-center gap-2">
+        <svg class="w-3.5 h-3.5 ${r.isZero ? "text-rose-400" : "text-slate-400"}" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+        <span class="font-semibold text-slate-200">${formatDisplayDate(r.date)}</span>
+        ${r.isZero ? '<span class="text-[9px] bg-rose-600/25 text-rose-300 border border-rose-500/50 px-1.5 py-0.5 rounded font-extrabold">ZERO</span>' : ''}
+      </div>
+      <span class="font-mono font-extrabold ${r.isZero ? "text-rose-400" : "text-emerald-400"}">${qt(r.achieved, r.target)}</span>
+    </div>
+  `).join("");
+
+  document.getElementById("staffModal").classList.remove("hidden");
+}
+document.getElementById("modalClose").addEventListener("click", () => document.getElementById("staffModal").classList.add("hidden"));
+document.getElementById("staffModal").addEventListener("click", e => {
+  if (e.target.id === "staffModal") e.currentTarget.classList.add("hidden");
+});
+
+/* ======================================================================
+   MANAGER / DASHBOARD
+   ====================================================================== */
+function renderManager() {
+  refreshMgrEntry();
+  renderDashboard();
+  renderDrivesList();
+  renderStaffList();
+  renderAuditLogs();
+}
+
+function computeConsolidatedStats() {
+  let spanPcs = 0, spanAmt = 0, todayPcs = 0, todayAmt = 0;
+  const activeIds = new Set();
+  state.entries.forEach(e => {
+    const d = state.drives.find(dr => dr.id === e.driveId);
+    if (!d) return;
+    activeIds.add(e.staffId);
+    if (d.type === "Weight") return;                       // kg is shown per drive, not mixed into Pcs / ₹ totals
+    if (d.type === "Count") {
+      spanPcs += e.value;
+      if (e.date === TODAY_DATE) todayPcs += e.value;
+    } else {
+      spanAmt += e.value;
+      if (e.date === TODAY_DATE) todayAmt += e.value;
+    }
+  });
+  return {
+    spanPcs, spanAmt, todayPcs, todayAmt,
+    activeDrives: state.drives.filter(d => d.active).length,
+    totalDrives: state.drives.length,
+    participating: activeIds.size,
+    totalStaff: state.staffList.length
+  };
+}
+
+function renderDashboard() {
+  const s = computeConsolidatedStats();
+  document.getElementById("kpiSpanPcs").textContent = `${s.spanPcs.toLocaleString()} Pcs`;
+  document.getElementById("kpiSpanAmt").textContent = `+ ₹${s.spanAmt.toLocaleString()}`;
+  document.getElementById("kpiTodayPcs").textContent = `${s.todayPcs.toLocaleString()} Pcs`;
+  document.getElementById("kpiTodayAmt").textContent = `+ ₹${s.todayAmt.toLocaleString()}`;
+  document.getElementById("kpiActiveDrives").innerHTML = `${s.activeDrives} <span class="text-xs font-normal text-slate-400">/ ${s.totalDrives}</span>`;
+  document.getElementById("kpiStaff").innerHTML = `${s.participating} <span class="text-xs font-normal text-slate-400">/ ${s.totalStaff}</span>`;
+
+  // Drive pills
+  const pills = document.getElementById("dashDrivePills");
+  pills.innerHTML = state.drives.map(d => {
+    const isSel = state.selectedDashDriveId === d.id;
+    const theme = getDriveTheme(d);
+    return `<button data-id="${d.id}" class="dash-drive-pill px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-2 transition ${isSel ? theme.pillActive : "bg-slate-800/90 text-slate-300 hover:bg-slate-700"}">
+      <span class="w-2 h-2 rounded-full ${d.active ? "bg-emerald-400" : "bg-slate-500"}"></span>
+      <span>${escapeHtml(d.name)}</span>
+    </button>`;
+  }).join("");
+  pills.querySelectorAll(".dash-drive-pill").forEach(b => {
+    b.addEventListener("click", () => {
+      state.selectedDashDriveId = Number(b.dataset.id);
+      state.dashEventDropdown = b.dataset.id;
+      state.dashDatePreset = "last7";
+      state.selectedDashDept = "All";
+      renderDashboard();
+    });
+  });
+
+  document.getElementById("dashAllDrivesBtn").className = state.selectedDashDriveId === "all"
+    ? "px-3 py-1.5 rounded-xl text-xs font-bold bg-emerald-500 text-slate-950 shadow-md"
+    : "px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-800 text-slate-300 hover:bg-slate-700";
+  document.getElementById("dashAllDrivesBtn").onclick = () => {
+    state.selectedDashDriveId = "all";
+    state.dashEventDropdown = "all";
+    state.dashDatePreset = "last7";
+    state.selectedDashDept = "All";
+    renderDashboard();
+  };
+
+  // Event select
+  const eventSel = document.getElementById("dashEventSelect");
+  eventSel.innerHTML = `<option value="all">Event: All Drives</option>` +
+    state.drives.map(d => `<option value="${d.id}">Event: ${escapeHtml(d.name)}</option>`).join("");
+  eventSel.value = String(state.dashEventDropdown);
+  eventSel.onchange = () => {
+    const v = eventSel.value;
+    state.dashEventDropdown = v;
+    state.selectedDashDriveId = v === "all" ? "all" : Number(v);
+    renderDashboard();
+  };
+
+  const consolidated = document.getElementById("dashConsolidated");
+  const dedicated = document.getElementById("dashDedicated");
+
+  if (state.selectedDashDriveId === "all") {
+    consolidated.classList.remove("hidden");
+    dedicated.classList.add("hidden");
+    renderDriveCards();
+  } else {
+    consolidated.classList.add("hidden");
+    dedicated.classList.remove("hidden");
+    renderDedicatedDashboard();
+  }
+}
+
+function renderDriveCards() {
+  const wrap = document.getElementById("driveCards");
+  wrap.innerHTML = state.drives.map(drive => {
+    const driveEntries = state.entries.filter(e => e.driveId === drive.id);
+    const spanTotal = driveEntries.reduce((s, e) => s + e.value, 0);
+    const todayTotal = driveEntries.filter(e => e.date === TODAY_DATE).reduce((s, e) => s + e.value, 0);
+    const yesterdayTotal = driveEntries.filter(e => e.date === YESTERDAY_DATE).reduce((s, e) => s + e.value, 0);
+    const spanPct = Math.min(100, Math.round((spanTotal / Math.max(1, drive.target)) * 100));
+    const daysLeft = getDaysBetween(TODAY_DATE, drive.endDate);
+
+    return `
+      <div data-id="${drive.id}" class="drive-card bg-slate-900 hover:bg-slate-800/90 border border-slate-800 rounded-2xl p-4 cursor-pointer transition shadow-lg space-y-3">
+        <div class="space-y-2">
+          <div class="flex items-center justify-between gap-2 flex-wrap">
+            <span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full border ${drive.active ? "bg-emerald-950 text-emerald-300 border-emerald-800" : "bg-slate-800 text-slate-400 border-slate-700"}">${drive.active ? "Active" : "Scheduled"}</span>
+            <span class="text-[11px] text-slate-400">${formatShortDate(drive.startDate)} – ${formatShortDate(drive.endDate)}</span>
+          </div>
+          <h3 class="text-base sm:text-lg font-extrabold text-white">${escapeHtml(drive.name)}</h3>
+          <div>
+            <div class="flex justify-between text-xs mb-1.5 gap-2">
+              <span class="text-slate-400">Span</span>
+              <span class="font-bold text-emerald-400 text-right">${formatValue(drive.unit, spanTotal)} / ${formatValue(drive.unit, drive.target)}</span>
+            </div>
+            <div class="w-full bg-slate-950 h-2.5 rounded-full overflow-hidden">
+              <div class="bg-gradient-to-r from-emerald-500 to-teal-400 h-2.5 rounded-full transition-all duration-500" style="width: ${spanPct}%"></div>
+            </div>
+            <div class="flex justify-between text-[11px] text-slate-400 mt-1">
+              <span>${spanPct}%</span><span>${daysLeft}d left</span>
+            </div>
+          </div>
+        </div>
+        <div class="border-t border-slate-800 pt-3 grid grid-cols-2 gap-2 text-xs">
+          <div class="bg-slate-950/80 rounded-xl p-2.5">
+            <p class="text-[10px] text-slate-400">Yest.</p>
+            <p class="font-bold text-slate-200 mt-0.5">${formatValue(drive.unit, yesterdayTotal)}</p>
+          </div>
+          <div class="bg-slate-950/80 rounded-xl p-2.5">
+            <p class="text-[10px] text-slate-400">Today</p>
+            <p class="font-bold text-emerald-400 mt-0.5">${formatValue(drive.unit, todayTotal)}</p>
+          </div>
+        </div>
+      </div>`;
+  }).join("");
+
+  wrap.querySelectorAll(".drive-card").forEach(card => {
+    card.addEventListener("click", () => {
+      state.selectedDashDriveId = Number(card.dataset.id);
+      state.dashEventDropdown = card.dataset.id;
+      state.dashDatePreset = "last7";
+      state.selectedDashDept = "All";
+      renderDashboard();
+    });
+  });
+}
+
+function resolveDateSet() {
+  if (state.dashDatePreset === "span") return null;
+  if (state.dashDatePreset === "today") return [TODAY_DATE];
+  if (state.dashDatePreset === "yesterday") return [YESTERDAY_DATE];
+  if (state.dashDatePreset === "last7") return getDateRange(getDateOffset(TODAY_DATE, -6), TODAY_DATE);
+  if (state.dashDatePreset === "last30") return getDateRange(getDateOffset(TODAY_DATE, -29), TODAY_DATE);
+  if (state.dashDatePreset === "custom") return [state.customDashDate];
+  if (state.dashDatePreset === "calendar") return state.multiSelectedDates.length ? state.multiSelectedDates : null;
+  return null;
+}
+
+function resolveCompareDateSet() {
+  if (!state.compareEnabled) return null;
+  if (state.comparePreset === "prevDay") return [getDateOffset(YESTERDAY_DATE, -1)];
+  if (state.comparePreset === "prev7") return getDateRange(getDateOffset(TODAY_DATE, -13), getDateOffset(TODAY_DATE, -7));
+  if (state.comparePreset === "prev30") return getDateRange(getDateOffset(TODAY_DATE, -59), getDateOffset(TODAY_DATE, -30));
+  if (state.comparePreset === "prevCustom") return [state.compareCustomDate];
+  return null;
+}
+
+function renderDedicatedDashboard() {
+  const drive = state.drives.find(d => d.id === state.selectedDashDriveId);
+  if (!drive) return;
+  const theme = getDriveTheme(drive);
+  const allDriveEntries = state.entries.filter(e => e.driveId === drive.id);
+  const spanTotal = allDriveEntries.reduce((s, e) => s + e.value, 0);
+  const spanPct = Math.min(100, Math.round((spanTotal / Math.max(1, drive.target)) * 100));
+  const daysRemaining = getDaysBetween(TODAY_DATE, drive.endDate);
+  const remainingTarget = Math.max(0, drive.target - spanTotal);
+  const requiredRunRate = Math.ceil(remainingTarget / Math.max(1, daysRemaining));
+
+  // Banner
+  document.getElementById("dashDriveName").textContent = drive.name;
+  document.getElementById("dashBadge").className = `text-[10px] font-bold uppercase px-2.5 py-0.5 rounded-full border ${theme.badge}`;
+  document.getElementById("dashBadge").textContent = drive.active ? "Live" : "Inactive";
+  document.getElementById("dashDates").innerHTML = `<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>${formatDisplayDate(drive.startDate)} → ${formatDisplayDate(drive.endDate)}`;
+  document.getElementById("dashSpanTotal").textContent = formatValue(drive.unit, spanTotal);
+  document.getElementById("dashSpanTotal").className = `text-xs sm:text-base font-extrabold ${theme.accentText}`;
+  document.getElementById("dashDaysLeft").textContent = `${daysRemaining}d`;
+  document.getElementById("dashRunRate").textContent = drive.unit === "₹"
+    ? `₹${requiredRunRate.toLocaleString()}/d` : `${requiredRunRate}/d`;
+  document.getElementById("dashSpanProgressLabel").textContent = `Overall Span Progress (${spanPct}%)`;
+  document.getElementById("dashSpanProgressNumbers").textContent = `${formatValue(drive.unit, spanTotal)} / ${formatValue(drive.unit, drive.target)}`;
+  const bar = document.getElementById("dashSpanBar");
+  bar.style.width = `${spanPct}%`;
+  bar.className = `h-2 rounded-full transition-all duration-500 bg-gradient-to-r ${theme.bar}`;
+
+  // Date picker controls
+  const presetSel = document.getElementById("dashDatePreset");
+  presetSel.value = state.dashDatePreset;
+  const customInput = document.getElementById("dashCustomDate");
+  customInput.value = state.customDashDate;
+  customInput.classList.toggle("hidden", state.dashDatePreset !== "custom");
+  const clearBtn = document.getElementById("dashClearFilter");
+  clearBtn.classList.toggle("hidden", !(state.dashDatePreset !== "span"));
+  clearBtn.onclick = () => { state.dashDatePreset = "span"; renderDedicatedDashboard(); };
+
+  presetSel.onchange = () => {
+    state.dashDatePreset = presetSel.value;
+    renderDedicatedDashboard();
+  };
+  customInput.onchange = () => {
+    state.customDashDate = customInput.value;
+    state.dashDatePreset = "custom";
+    renderDedicatedDashboard();
+  };
+
+  // Compare toggle
+  const cmpBtn = document.getElementById("compareToggle");
+  cmpBtn.textContent = state.compareEnabled ? "Comparison ON" : "Compare";
+  cmpBtn.className = `px-2.5 py-1.5 rounded-xl text-xs font-bold transition ${state.compareEnabled ? "bg-indigo-500 text-white" : "bg-slate-800 text-slate-300 hover:bg-slate-700"}`;
+  cmpBtn.onclick = () => { state.compareEnabled = !state.compareEnabled; renderDedicatedDashboard(); };
+
+  const cmpSel = document.getElementById("comparePreset");
+  cmpSel.classList.toggle("hidden", !state.compareEnabled);
+  cmpSel.value = state.comparePreset;
+  cmpSel.onchange = () => { state.comparePreset = cmpSel.value; renderDedicatedDashboard(); };
+  const cmpCustom = document.getElementById("compareCustomDate");
+  cmpCustom.classList.toggle("hidden", !(state.compareEnabled && state.comparePreset === "prevCustom"));
+  cmpCustom.value = state.compareCustomDate;
+  cmpCustom.onchange = () => { state.compareCustomDate = cmpCustom.value; renderDedicatedDashboard(); };
+
+  // Calendar
+  const calWrap = document.getElementById("calendarWrap");
+  calWrap.classList.toggle("hidden", state.dashDatePreset !== "calendar");
+  if (state.dashDatePreset === "calendar") renderCalendar();
+
+  // Resolve
+  const dateSet = resolveDateSet();
+  const compareSet = resolveCompareDateSet();
+  const filtered = dateSet ? allDriveEntries.filter(e => dateSet.includes(e.date)) : allDriveEntries;
+  const compareEntries = compareSet ? allDriveEntries.filter(e => compareSet.includes(e.date)) : [];
+  const filteredTotal = filtered.reduce((s, e) => s + e.value, 0);
+  const compareTotal = compareEntries.reduce((s, e) => s + e.value, 0);
+  const delta = filteredTotal - compareTotal;
+  const deltaPct = compareTotal > 0 ? Math.round((delta / compareTotal) * 100) : filteredTotal > 0 ? 100 : 0;
+
+  document.getElementById("filteredTotal").textContent = formatValue(drive.unit, filteredTotal);
+  document.getElementById("filteredTotal").className = theme.accentText;
+  document.getElementById("filteredDayCount").textContent = dateSet
+    ? ` (${dateSet.length} ${dateSet.length === 1 ? "day" : "days"})` : "";
+
+  const cmpSummary = document.getElementById("compareSummary");
+  if (state.compareEnabled) {
+    cmpSummary.classList.remove("hidden");
+    cmpSummary.classList.add("flex");
+    document.getElementById("compareTotal").textContent = formatValue(drive.unit, compareTotal);
+    const deltaEl = document.getElementById("compareDelta");
+    deltaEl.className = `flex items-center gap-1 font-extrabold px-2 py-1 rounded-lg ${delta > 0 ? "bg-emerald-950 text-emerald-400 border border-emerald-800" : delta < 0 ? "bg-rose-950 text-rose-400 border border-rose-800" : "bg-slate-800 text-slate-300 border border-slate-700"}`;
+    deltaEl.innerHTML = `
+      ${delta > 0 ? '<svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 15l7-7 7 7"/></svg>' : delta < 0 ? '<svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>' : ''}
+      <span>${delta > 0 ? "+" : ""}${formatValue(drive.unit, delta)} (${deltaPct}%)</span>
+    `;
+  } else {
+    cmpSummary.classList.add("hidden");
+    cmpSummary.classList.remove("flex");
+  }
+
+  // Bar chart
+  const dateSetForChart = new Set(getDateRange(getDateOffset(TODAY_DATE, -6), TODAY_DATE));
+  allDriveEntries.forEach(e => { if (e.date) dateSetForChart.add(e.date); });
+  const sortedDates = Array.from(dateSetForChart).sort();
+  const dailySeries = sortedDates.map(dt => ({
+    date: dt, label: formatShortDate(dt),
+    value: allDriveEntries.filter(e => e.date === dt).reduce((s, e) => s + e.value, 0)
+  }));
+  const maxDaily = Math.max(1, ...dailySeries.map(d => d.value));
+  document.getElementById("barChart").innerHTML = dailySeries.slice(-7).map(b => {
+    const h = Math.max(8, Math.round((b.value / maxDaily) * 100));
+    const isActive = dateSet && dateSet.includes(b.date);
+    return `<button data-date="${b.date}" class="bar-btn flex flex-col items-center justify-end h-full group focus:outline-none">
+      <span class="text-[9px] sm:text-[10px] font-bold mb-1 ${isActive ? "text-amber-300" : "text-slate-300"}">${drive.unit === "₹" ? "₹" + money(b.value) : b.value}</span>
+      <div class="w-full max-w-[42px] h-24 sm:h-28 bg-slate-950 rounded-t-lg flex items-end overflow-hidden p-0.5 border border-slate-800/80">
+        <div style="height: ${h}%" class="w-full rounded-t-md transition-all duration-300 ${isActive ? "bg-amber-400" : "bg-gradient-to-t " + theme.bar}"></div>
+      </div>
+      <span class="text-[9px] sm:text-[10px] mt-1 font-semibold ${isActive ? "text-amber-300" : "text-slate-400"}">${b.label}</span>
+    </button>`;
+  }).join("");
+  document.querySelectorAll(".bar-btn").forEach(b => {
+    b.addEventListener("click", () => {
+      const dt = b.dataset.date;
+      if (state.dashDatePreset === "custom" && state.customDashDate === dt) {
+        state.dashDatePreset = "span";
+      } else {
+        state.customDashDate = dt;
+        state.dashDatePreset = "custom";
+      }
+      renderDedicatedDashboard();
+    });
+  });
+
+  // Department cards
+  const deptCards = driveDepts(drive).map(deptName => {
+    const deptEntries = filtered.filter(e => (e.targetDept || e.staffDept) === deptName);
+    const total = deptEntries.reduce((s, e) => s + e.value, 0);
+    const staffInDept = state.staffList.filter(st => st.dept === deptName);
+    const activeCount = new Set(deptEntries.map(e => e.staffId)).size;
+    const sharePct = filteredTotal > 0 ? Math.round((total / filteredTotal) * 100) : 0;
+    return { dept: deptName, total, staffCount: staffInDept.length, activeCount, sharePct };
+  });
+  document.getElementById("deptCards").innerHTML = deptCards.map(dc => {
+    const isSel = state.selectedDashDept === dc.dept;
+    return `<div data-dept="${dc.dept}" class="dept-card p-3 rounded-xl border cursor-pointer transition ${isSel ? "bg-slate-800 border-emerald-500" : "bg-slate-900 border-slate-800 hover:border-slate-700"}">
+      <div class="flex items-center justify-between mb-1.5 gap-2">
+        <div class="flex items-center gap-2 min-w-0">
+          <span class="font-bold text-sm text-white">${dc.dept}</span>
+          <span class="text-[11px] text-slate-400 whitespace-nowrap">(${dc.activeCount}/${dc.staffCount})</span>
+        </div>
+        <span class="text-xs font-extrabold ${theme.accentText} text-right whitespace-nowrap">
+          ${formatValue(drive.unit, dc.total)} <span class="text-slate-500 font-normal">(${dc.sharePct}%)</span>
+        </span>
+      </div>
+      <div class="w-full bg-slate-950 h-2 rounded-full overflow-hidden">
+        <div class="bg-gradient-to-r ${theme.bar} h-2 rounded-full transition-all duration-500" style="width: ${dc.sharePct}%"></div>
+      </div>
+    </div>`;
+  }).join("");
+  document.querySelectorAll(".dept-card").forEach(c => {
+    c.addEventListener("click", () => {
+      const d = c.dataset.dept;
+      state.selectedDashDept = state.selectedDashDept === d ? "All" : d;
+      renderDedicatedDashboard();
+    });
+  });
+  document.getElementById("resetDeptFilter").classList.toggle("hidden", state.selectedDashDept === "All");
+  document.getElementById("resetDeptFilter").onclick = () => { state.selectedDashDept = "All"; renderDedicatedDashboard(); };
+
+  // Staff performance
+  const tDates = dateSet === null ? driveDates(drive) : dateSet;
+  const dd = driveDepts(drive);
+  const visibleStaff = state.staffList.filter(s => dd.includes(s.dept)
+    && (state.selectedDashDept === "All" || s.dept === state.selectedDashDept));
+
+  const staffPerf = visibleStaff.map(st => {
+    const achieved = filtered.filter(e => e.staffId === st.id).reduce((s, e) => s + e.value, 0);
+    const target = staffTargetOver(st, drive, tDates);
+    const pct = target > 0 ? Math.round((achieved / target) * 100) : 0;
+    const cmpAchieved = state.compareEnabled
+      ? compareEntries.filter(e => e.staffId === st.id).reduce((s, e) => s + e.value, 0)
+      : null;
+    return { ...st, achieved, target, pct, delta: cmpAchieved !== null ? achieved - cmpAchieved : null };
+  }).sort((a, b) => b.achieved - a.achieved);
+
+  document.getElementById("staffCountBadge").textContent = `${staffPerf.length} Staff`;
+  document.getElementById("staffPerformance").innerHTML = staffPerf.map((st, i) => `
+    <div data-staffid="${st.id}" class="staff-row flex items-center justify-between bg-slate-950/90 hover:bg-slate-800/80 border border-slate-800 rounded-xl p-2.5 cursor-pointer transition">
+      <div class="flex items-center gap-2.5 min-w-0">
+        <span class="w-6 h-6 rounded-full bg-slate-800 text-slate-300 text-xs font-bold flex items-center justify-center shrink-0">${i + 1}</span>
+        <div class="min-w-0">
+          <div class="flex items-center gap-1.5 flex-wrap">
+            <p class="text-xs font-bold text-white truncate">${escapeHtml(st.name)}</p>
+            <span class="text-[10px] bg-slate-800 text-slate-300 px-1.5 py-0.5 rounded">${escapeHtml(st.dept)}</span>
+            ${st.achieved === 0 ? '<span class="text-[9px] bg-rose-950 text-rose-400 border border-rose-800/80 px-1.5 py-0.5 rounded font-bold">ZERO</span>' : ''}
+          </div>
+          <p class="text-[10px] text-slate-400 mt-0.5">${st.id} • ${typeLabel(st.type)}</p>
+        </div>
+      </div>
+      <div class="text-right shrink-0">
+        <p class="text-xs font-mono font-extrabold ${st.achieved === 0 ? "text-rose-400" : theme.accentText}">${qt(st.achieved, st.target)}</p>
+        <p class="text-[10px] text-slate-400">${st.target > 0 ? st.pct + "%" : ""}</p>
+        ${state.compareEnabled && st.delta !== null ? `<p class="text-[9px] font-bold ${st.delta > 0 ? "text-emerald-400" : st.delta < 0 ? "text-rose-400" : "text-slate-500"}">${st.delta > 0 ? "+" : ""}${st.delta} vs prev</p>` : ""}
+      </div>
+    </div>
+  `).join("");
+  document.querySelectorAll("#staffPerformance .staff-row").forEach(el => {
+    el.addEventListener("click", () => openStaffModal(el.dataset.staffid));
+  });
+}
+
+function renderCalendar() {
+  const calDates = getDateRange("2026-11-01", "2026-12-31");
+  document.getElementById("calendarCount").textContent = `${state.multiSelectedDates.length} selected`;
+  document.getElementById("calendarGrid").innerHTML = calDates.map(dt => {
+    const isSel = state.multiSelectedDates.includes(dt);
+    const isFuture = dt > TODAY_DATE;
+    const drive = state.drives.find(d => d.id === state.selectedDashDriveId);
+    const hasEntries = drive && state.entries.some(e => e.driveId === drive.id && e.date === dt);
+    return `<button data-cal="${dt}" class="cal-btn relative py-1.5 rounded-lg text-[10px] font-bold transition border ${isSel ? "bg-emerald-500 text-slate-950 border-emerald-400" : isFuture ? "bg-slate-900 text-slate-600 border-slate-800" : "bg-slate-900 text-slate-300 border-slate-800 hover:border-slate-600"}">
+      ${formatShortDate(dt)}
+      ${hasEntries && !isSel ? '<span class="absolute top-0.5 right-0.5 w-1 h-1 rounded-full bg-emerald-400"></span>' : ''}
+    </button>`;
+  }).join("");
+  document.querySelectorAll(".cal-btn").forEach(b => {
+    b.addEventListener("click", () => {
+      const dt = b.dataset.cal;
+      if (state.multiSelectedDates.includes(dt)) {
+        state.multiSelectedDates = state.multiSelectedDates.filter(x => x !== dt);
+      } else {
+        state.multiSelectedDates = [...state.multiSelectedDates, dt];
+      }
+      renderCalendar();
+      renderDedicatedDashboard();
+    });
+  });
+}
+
+document.querySelectorAll(".cal-quick").forEach(btn => {
+  btn.addEventListener("click", () => {
+    const q = btn.dataset.quick;
+    if (q === "today") state.multiSelectedDates = [TODAY_DATE];
+    else if (q === "last7") state.multiSelectedDates = getDateRange(getDateOffset(TODAY_DATE, -6), TODAY_DATE);
+    else if (q === "all") state.multiSelectedDates = getDateRange("2026-11-01", "2026-12-31");
+    else if (q === "clear") state.multiSelectedDates = [];
+    renderCalendar();
+    renderDedicatedDashboard();
+  });
+});
+
+document.getElementById("resetBarFilter").addEventListener("click", () => {
+  state.dashDatePreset = "span";
+  renderDedicatedDashboard();
+});
+
+/* ======================================================================
+   MANAGER: DRIVES / STAFF / LOGS
+   ====================================================================== */
+function renderDrivesList() {
+  const wrap = document.getElementById("drivesList");
+  wrap.innerHTML = state.drives.map(d => `
+    <div class="flex flex-wrap items-center justify-between gap-2 bg-slate-950 p-3 rounded-xl border border-slate-800 text-xs">
+      <div class="min-w-0 flex-1">
+        <p class="font-bold text-white truncate">${escapeHtml(d.name)}</p>
+        <p class="text-slate-400 text-[11px]">Target: ${formatValue(d.unit, d.target)} • ${formatDisplayDate(d.startDate)} – ${formatDisplayDate(d.endDate)}</p>
+        <p class="text-slate-500 text-[11px]">Sections: ${escapeHtml(deptsText(d))}</p>
+        <p class="text-emerald-300/90 text-[11px] mt-1">🎯 ${escapeHtml(targetSummary(d))}</p>
+      </div>
+      <div class="flex items-center gap-2">
+        <button data-edit-drive="${d.id}" class="p-1.5 text-emerald-400 hover:bg-emerald-950/60 rounded-lg transition" title="Edit drive">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536M9 13l6.768-6.768a2 2 0 112.828 2.828L11.828 15.828a2 2 0 01-1.414.586H8v-2.414a2 2 0 01.586-1.414z"/></svg>
+        </button>
+        <button data-targets="${d.id}" class="px-3 py-1 rounded-lg font-bold transition bg-emerald-950 text-emerald-300 border border-emerald-800">🎯 Targets</button>
+        <button data-depts="${d.id}" class="px-3 py-1 rounded-lg font-bold transition bg-slate-800 text-slate-300 border border-slate-700">Sections</button>
+        <button data-toggle="${d.id}" class="px-3 py-1 rounded-lg font-bold transition ${d.active ? "bg-emerald-950 text-emerald-300 border border-emerald-800" : "bg-slate-800 text-slate-400 border border-slate-700"}">${d.active ? "Active" : "Inactive"}</button>
+        <button data-del="${d.id}" class="p-1.5 text-rose-400 hover:bg-rose-950/60 rounded-lg transition">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+        </button>
+      </div>
+    </div>
+  `).join("");
+  wrap.querySelectorAll("[data-edit-drive]").forEach(b => b.addEventListener("click", () => openEditDrive(Number(b.dataset.editDrive))));
+  wrap.querySelectorAll("[data-depts]").forEach(b => b.addEventListener("click", () => openDeptsModal(Number(b.dataset.depts))));
+  wrap.querySelectorAll("[data-targets]").forEach(b => b.addEventListener("click", () => openTargetsModal(Number(b.dataset.targets))));
+  wrap.querySelectorAll("[data-toggle]").forEach(b => {
+    b.addEventListener("click", () => {
+      const id = Number(b.dataset.toggle);
+      state.drives = state.drives.map(d => d.id === id ? { ...d, active: !d.active } : d);
+      api("updateDrive", { id, active: state.drives.find(d => d.id === id).active });
+      renderDrivesList(); renderDashboard(); renderEntryDriveSelect();
+    });
+  });
+  wrap.querySelectorAll("[data-del]").forEach(b => {
+    b.addEventListener("click", () => {
+      const id = Number(b.dataset.del);
+      state.drives = state.drives.filter(d => d.id !== id);
+      api("deleteDrive", { id });
+      if (state.selectedDashDriveId === id) state.selectedDashDriveId = "all";
+      renderDrivesList(); renderDashboard(); renderEntryDriveSelect();
+    });
+  });
+}
+
+function renderStaffList() {
+  document.getElementById("staffTotal").textContent = state.staffList.length;
+  const wrap = document.getElementById("staffList");
+  wrap.innerHTML = state.staffList.map(s => `
+    <div class="flex flex-wrap items-center justify-between gap-2 bg-slate-950 p-3 rounded-xl border border-slate-800 text-xs">
+      <div class="flex flex-wrap items-center gap-1.5 min-w-0">
+        <span class="font-bold text-white">${escapeHtml(s.name)}</span>
+        ${s.mobile ? `<span class="text-slate-400">📞 ${escapeHtml(s.mobile)}</span>` : ""}
+        <span class="bg-slate-800 text-slate-200 px-2 py-0.5 rounded">${escapeHtml(s.dept)}</span>
+        <span class="px-2 py-0.5 rounded ${s.type === "Promoter" ? "bg-amber-950 text-amber-300 border border-amber-800" : s.type === "Part-timer" ? "bg-sky-950 text-sky-300 border border-sky-800" : "bg-slate-800 text-slate-400"}">${typeLabel(s.type)}</span>
+      </div>
+      <div class="flex items-center gap-1.5">
+        <button data-edit-staff="${escapeHtml(s.id)}" class="p-1.5 text-emerald-400 hover:bg-emerald-950/60 rounded-lg transition" title="Edit">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536M9 13l6.768-6.768a2 2 0 112.828 2.828L11.828 15.828a2 2 0 01-1.414.586H8v-2.414a2 2 0 01.586-1.414z"/></svg>
+        </button>
+        <button data-del-staff="${s.id}" class="p-1.5 text-rose-400 hover:bg-rose-950/60 rounded-lg transition">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+        </button>
+      </div>
+    </div>
+  `).join("");
+  wrap.querySelectorAll("[data-del-staff]").forEach(b => {
+    b.addEventListener("click", () => {
+      api("deleteStaff", { id: b.dataset.delStaff });
+      state.staffList = state.staffList.filter(s => s.id !== b.dataset.delStaff);
+      afterStaffChange();
+    });
+  });
+  wrap.querySelectorAll("[data-edit-staff]").forEach(b => b.addEventListener("click", () => openEditStaff(b.dataset.editStaff)));
+}
+function afterStaffChange() {                         // keep every screen (incl. Enter Associate Counts) in step with the staff list
+  renderStaffList(); renderLoginSelect(); refreshMgrEntry(); renderReports(); renderDashboard();
+}
+function normMobile(v) {                              // "" = none, null = invalid, else 10 digits
+  let d = String(v || "").replace(/\D/g, "");
+  if (!d) return "";
+  if (d.length === 12 && d.startsWith("91")) d = d.slice(2);
+  if (d.length === 11 && d.startsWith("0")) d = d.slice(1);
+  return d.length === 10 ? d : null;
+}
+function nextStaffId() {                              // IDs are automatic now (EMP001, EMP002, ...)
+  let max = 0;
+  state.staffList.forEach(s => { const m = /^EMP(\d+)$/i.exec(s.id); if (m) max = Math.max(max, Number(m[1])); });
+  let n = Math.max(max, state.staffList.length) + 1, id;
+  do { id = "EMP" + String(n++).padStart(3, "0"); } while (state.staffList.some(s => s.id.toLowerCase() === id.toLowerCase()));
+  return id;
+}
+function showFormError(id, msg) { const el = document.getElementById(id); el.textContent = msg; el.classList.toggle("hidden", !msg); }
+function openEditStaff(id) {
+  const s = state.staffList.find(x => x.id === id); if (!s) return;
+  const f = document.getElementById("editStaffForm");
+  f.dataset.id = id;
+  f.name.value = s.name; f.mobile.value = s.mobile || "";
+  f.dept.innerHTML = [...DEPARTMENTS, ...(DEPARTMENTS.includes(s.dept) ? [] : [s.dept])].map(d => `<option${d === s.dept ? " selected" : ""}>${escapeHtml(d)}</option>`).join("");
+  f.type.innerHTML = TYPES.map(([v, l]) => `<option value="${v}"${v === s.type ? " selected" : ""}>${l}</option>`).join("");
+  showFormError("editStaffError", "");
+  document.getElementById("editStaffModal").classList.remove("hidden");
+}
+document.getElementById("editStaffCancel").addEventListener("click", () => document.getElementById("editStaffModal").classList.add("hidden"));
+document.getElementById("editStaffForm").addEventListener("submit", e => {
+  e.preventDefault();
+  const f = e.target, id = f.dataset.id, name = f.name.value.trim(), dept = f.dept.value, mobile = normMobile(f.mobile.value);
+  if (!name || !dept) return showFormError("editStaffError", "Name and section are required.");
+  if (mobile === null) return showFormError("editStaffError", "Enter a valid 10-digit mobile number, or leave it empty.");
+  if (state.staffList.some(s => s.id !== id && s.name.toLowerCase() === name.toLowerCase() && s.dept === dept))
+    return showFormError("editStaffError", "Another staff member with this name already exists in that section.");
+  const updated = { id, name, dept, type: f.type.value, mobile };
+  state.staffList = state.staffList.map(s => s.id === id ? updated : s);
+  if (state.currentStaff && state.currentStaff.id === id) { state.currentStaff = updated; saveSession(); renderSession(); }
+  api("saveStaff", { staff: updated });
+  document.getElementById("editStaffModal").classList.add("hidden");
+  afterStaffChange();
+});
+
+function renderAuditLogs() {
+  const wrap = document.getElementById("auditLogs");
+  document.getElementById("logCount").textContent = state.entries.length;
+  wrap.innerHTML = state.entries.slice(0, 100).map(log => {
+    const d = state.drives.find(dr => dr.id === log.driveId);
+    return `<div class="flex flex-wrap justify-between items-center gap-2 bg-slate-950 p-2.5 rounded-xl border border-slate-800/80">
+      <div class="min-w-0">
+        <span class="text-emerald-400 font-bold">${escapeHtml(log.staffName)}</span> credited
+        <span class="text-white font-extrabold">${formatValue(d?.unit || "", log.value)}</span>
+        to <span class="text-indigo-300 font-semibold">${escapeHtml(log.targetDept)}</span>
+        <span class="text-slate-400">(${escapeHtml(d?.name || "Drive")})</span>
+      </div>
+      <span class="text-[11px] text-slate-500 whitespace-nowrap">${formatShortDate(log.date)} • ${escapeHtml(String(log.timestamp))}
+        <button data-del-entry="${log.id}" data-drive="${log.driveId}" class="ml-2 text-rose-400 hover:text-rose-300 font-bold" title="Delete entry">✕</button></span>
+    </div>`;
+  }).join("");
+  wrap.querySelectorAll("[data-del-entry]").forEach(b => b.addEventListener("click", () => {
+    if (!confirm("Delete this entry?")) return;
+    const id = Number(b.dataset.delEntry);
+    api("deleteEntry", { driveId: Number(b.dataset.drive), id });
+    state.entries = state.entries.filter(e => e.id !== id);
+    renderAuditLogs();
+    if (state.activeTab === "manager") renderDashboard();
+  }));
+}
+
+/* ======================================================================
+   FORM HANDLERS
+   ====================================================================== */
+document.getElementById("addDriveForm").addEventListener("submit", async e => {
+  e.preventDefault();
+  const form = e.target, fd = new FormData(form);
+  const name = fd.get("name").trim().replace(/\s+/g, " ");
+  const target = Number(fd.get("target")), type = fd.get("type");
+  const tw = Number(fd.get("targetWeekday")) || 0, te = Number(fd.get("targetWeekend")) || 0;
+  const targets = (tw || te) ? { ...(tw ? { weekday: { total: tw } } : {}), ...(te ? { weekend: { total: te } } : {}) } : null;
+  const startDate = fd.get("startDate") || TODAY_DATE;
+  const endDate = fd.get("endDate") || getDateOffset(startDate, 30);
+  if (!name || !target) return;
+  if (endDate < startDate) { alert("End date is before start date"); return; }
+  if (!newDriveDepts.size) { showNotice("Select sections", "Pick at least one section for this drive."); return; }
+  const dup = state.drives.find(d => driveKey(d.name, d.startDate) === driveKey(name, startDate));
+  if (dup) return showDuplicate(dup);
+  const colors = ["emerald", "indigo", "amber"];
+  const drive = { id: Date.now(), name, target, type, unit: unitFor(type),
+                  startDate, endDate, targets, active: true, color: colors[state.drives.length % 3],
+                  depts: DEPARTMENTS.filter(d => newDriveDepts.has(d)) };
+  state.drives.push(drive);
+  form.reset();
+  newDriveDepts = new Set(DEPARTMENTS); renderDeptChips("newDriveDepts", newDriveDepts);
+  renderDrivesList(); renderDashboard(); renderEntryDriveSelect();
+  const r = await api("addDrive", { drive });
+  if (!r.ok) {                                   // rollback
+    state.drives = state.drives.filter(d => d.id !== drive.id);
+    renderDrivesList(); renderDashboard(); renderEntryDriveSelect();
+    if (r.error === "DUPLICATE") showDuplicate(r.existing); else alert("Could not create drive: " + r.error);
+  }
+});
+
+document.getElementById("addStaffForm").addEventListener("submit", e => {
+  e.preventDefault();
+  const fd = new FormData(e.target);
+  const name = fd.get("name").trim(), dept = fd.get("dept"), mobile = normMobile(fd.get("mobile"));
+  if (!name || !dept) return showFormError("staffFormError", "Staff name and section are required.");
+  if (mobile === null) return showFormError("staffFormError", "Enter a valid 10-digit mobile number, or leave it empty.");
+  if (state.staffList.some(s => s.name.toLowerCase() === name.toLowerCase() && s.dept === dept))
+    return showFormError("staffFormError", "This staff member already exists in that section.");
+  showFormError("staffFormError", "");
+  const member = { id: nextStaffId(), name, dept, type: fd.get("type"), mobile };
+  state.staffList.push(member);
+  api("saveStaff", { staff: member });
+  e.target.reset();
+  afterStaffChange();
+});
+
+/* ======================================================================
+   MANAGER LOCK
+   ====================================================================== */
+const MANAGER_CODE = "0000";
+let managerUnlocked = false;
+try { managerUnlocked = sessionStorage.getItem("smartdrive_mgr") === "1"; } catch (_) {}
+function openLock() {
+  document.getElementById("lockPin").value = "";
+  document.getElementById("lockError").classList.add("hidden");
+  document.getElementById("lockModal").classList.remove("hidden");
+  setTimeout(() => document.getElementById("lockPin").focus(), 50);
+}
+document.getElementById("lockForm").addEventListener("submit", e => {
+  e.preventDefault();
+  if (document.getElementById("lockPin").value === MANAGER_CODE) {
+    managerUnlocked = true;
+    try { sessionStorage.setItem("smartdrive_mgr", "1"); } catch (_) {}
+    document.getElementById("lockModal").classList.add("hidden");
+    document.querySelector('.tab-btn[data-tab="manager"]').click();
+  } else {
+    document.getElementById("lockError").classList.remove("hidden");
+    document.getElementById("lockPin").value = "";
+  }
+});
+document.getElementById("lockCancel").addEventListener("click", () => document.getElementById("lockModal").classList.add("hidden"));
+document.getElementById("lockManagerBtn").addEventListener("click", () => {
+  managerUnlocked = false;
+  try { sessionStorage.removeItem("smartdrive_mgr"); } catch (_) {}
+  document.querySelector('.tab-btn[data-tab="entry"]').click();
+});
+
+/* ======================================================================
+   MANAGER: ENTER ASSOCIATE COUNTS (bulk)
+   ====================================================================== */
+function mgrDrive() { return state.drives.find(d => d.id === Number(document.getElementById("mgrDrive").value)); }
+function refreshMgrEntry() {
+  const sel = document.getElementById("mgrDrive"), prev = sel.value;
+  const act = state.drives.filter(d => d.active);
+  sel.innerHTML = act.length ? act.map(d => `<option value="${d.id}">${escapeHtml(d.name)} (${d.unit})</option>`).join("")
+                             : `<option value="">No active drive</option>`;
+  if (act.some(d => String(d.id) === prev)) sel.value = prev;
+  const drive = mgrDrive();
+  const list = drive ? state.staffList.slice().sort((a, b) => a.name.localeCompare(b.name)) : [];      // all staff, whatever the drive's sections
+  document.querySelectorAll("#mgrRows .mgr-name").forEach(ns => {
+    if (ns.dataset.fixed) return;                       // department-list rows keep their employee
+    const p = ns.value;
+    ns.innerHTML = `<option value="">Associate…</option>` + list.map(s => `<option value="${s.id}">${escapeHtml(s.name)} (${escapeHtml(s.dept)})</option>`).join("");
+    if (list.some(s => s.id === p)) ns.value = p;
+    ns.closest(".mgr-row").querySelector(".mgr-code").value = ns.value;   // keep code in sync
+  });
+  const isAmt = drive && drive.type === "Amount";
+  document.getElementById("mgrValLabel").textContent = isAmt ? "Price (₹)" : (drive && drive.type === "Weight") ? "Weight (Kg)" : "Qty (Pcs)";
+  document.querySelectorAll("#mgrRows .mgr-val").forEach(i => i.placeholder = isAmt ? "Price" : (drive && drive.type === "Weight") ? "Kg" : "Qty");
+  populateMgrDepts();
+  mgrSyncStaff();
+}
+let mgrStaffSig = "";
+let mgrDeptChoice = "all", mgrDeptPrev = "all";        // default view: every employee, grouped by department
+function mgrSyncStaff() {                              // staff added / edited / deleted -> refresh the department list, keep typed values
+  const sig = state.staffList.map(s => s.id + "|" + s.name + "|" + s.dept).join(";");
+  if (sig === mgrStaffSig) return;
+  mgrStaffSig = sig;
+  if ((document.getElementById("mgrDept").value || "manual") === "manual") return;   // manual rows already refresh their name lists
+  const keep = {};
+  document.querySelectorAll("#mgrRows .mgr-row").forEach(r => {
+    const v = r.querySelector(".mgr-val").value, id = r.querySelector(".mgr-name").value;
+    if (v && id) keep[id] = v;
+  });
+  resetMgrRows();
+  document.querySelectorAll("#mgrRows .mgr-row").forEach(r => {
+    const id = r.querySelector(".mgr-name").value;
+    if (keep[id]) r.querySelector(".mgr-val").value = keep[id];
+  });
+}
+function addMgrRow() {
+  const d = document.createElement("div");
+  d.className = "mgr-row grid grid-cols-12 gap-2 items-center rounded-xl border border-slate-800 p-1.5";
+  const f = "bg-slate-950 border border-slate-800 rounded-lg p-2 text-xs text-white focus:outline-none focus:border-emerald-500";
+  d.innerHTML = `
+    <select class="mgr-name col-span-5 ${f}"></select>
+    <input class="mgr-code col-span-3 ${f} text-emerald-300 font-bold" type="text" readonly tabindex="-1" placeholder="Auto" />
+    <input class="mgr-val col-span-3 ${f}" type="number" inputmode="decimal" step="any" min="0" />
+    <button type="button" class="mgr-del col-span-1 text-rose-400 hover:text-rose-300 font-bold text-sm">✕</button>`;
+  const nameSel = d.querySelector(".mgr-name"), codeBox = d.querySelector(".mgr-code");
+  nameSel.addEventListener("change", () => { codeBox.value = nameSel.value; });   // employee code fills automatically
+  d.querySelector(".mgr-del").addEventListener("click", () => {
+    if (document.querySelectorAll("#mgrRows .mgr-row").length > 1) d.remove(); else resetMgrRows();
+  });
+  document.getElementById("mgrRows").appendChild(d);
+  refreshMgrEntry();
+}
+function mgrSections() {                               // every section that has at least one staff member
+  const have = new Set(state.staffList.map(x => x.dept));
+  return [...DEPARTMENTS.filter(d => have.has(d)), ...[...have].filter(d => !DEPARTMENTS.includes(d))];
+}
+function populateMgrDepts() {
+  const sel = document.getElementById("mgrDept"), prev = mgrDeptChoice, drive = mgrDrive();
+  const deps = drive ? mgrSections() : [];
+  const cnt = d => state.staffList.filter(s => s.dept === d).length;
+  const total = deps.reduce((n, d) => n + cnt(d), 0);
+  const html = `<option value="manual">✍️ Manual – pick names one by one</option>`
+    + (deps.length ? `<option value="all">📋 All departments – every employee (${total})</option>` : "")
+    + deps.map(d => `<option value="${escapeHtml(d)}">🏬 ${escapeHtml(d)} – ${cnt(d)} employee${cnt(d) === 1 ? "" : "s"}</option>`).join("");
+  if (sel.dataset.sig !== html) { sel.innerHTML = html; sel.dataset.sig = html; }   // only rewrite when changed
+  sel.value = [...sel.options].some(o => o.value === prev) ? prev : "manual";
+}
+function addMgrFixedRow(st, isAmt) {
+  const drive = mgrDrive();
+  const d = document.createElement("div");
+  d.className = "mgr-row grid grid-cols-12 gap-2 items-center rounded-xl border border-slate-800 p-1.5";
+  const f = "bg-slate-950 border border-slate-800 rounded-lg p-2 text-xs text-white focus:outline-none focus:border-emerald-500";
+  d.innerHTML = `
+    <select class="mgr-name col-span-5 ${f}" data-fixed="1" disabled style="opacity:1"><option value="${escapeHtml(st.id)}">${escapeHtml(st.name)}</option></select>
+    <input class="mgr-code col-span-3 ${f} text-emerald-300 font-bold" type="text" readonly tabindex="-1" value="${escapeHtml(st.id)}" />
+    <input class="mgr-val col-span-3 ${f}" type="number" inputmode="decimal" step="any" min="0" placeholder="${isAmt ? "Price" : drive.type === "Weight" ? "Kg" : "Qty"}" />
+    <button type="button" class="mgr-del col-span-1 text-rose-400 hover:text-rose-300 font-bold text-sm" title="Remove">✕</button>`;
+  d.querySelector(".mgr-del").addEventListener("click", () => {
+    if (document.querySelectorAll("#mgrRows .mgr-row").length > 1) d.remove(); else resetMgrRows();
+  });
+  document.getElementById("mgrRows").appendChild(d);
+}
+function resetMgrRows() {
+  const wrap = document.getElementById("mgrRows");
+  wrap.innerHTML = "";
+  const mode = document.getElementById("mgrDept").value || "manual", drive = mgrDrive();
+  if (mode === "manual" || !drive) { for (let i = 0; i < 3; i++) addMgrRow(); return; }
+  const isAmt = drive.type === "Amount";
+  const depts = mode === "all" ? mgrSections() : [mode];
+  let any = false;
+  depts.forEach(dep => {
+    const people = state.staffList.filter(s => s.dept === dep).sort((a, b) => a.name.localeCompare(b.name));
+    if (!people.length) return;
+    any = true;
+    const head = document.createElement("div");
+    head.className = "flex items-center justify-between px-2.5 py-1.5 mt-1 rounded-lg bg-slate-800/70 text-[11px] font-bold";
+    head.innerHTML = `<span class="text-emerald-300">${escapeHtml(dep)}</span><span class="text-slate-400">${people.length} employee${people.length === 1 ? "" : "s"}</span>`;
+    wrap.appendChild(head);
+    people.forEach(s => addMgrFixedRow(s, isAmt));
+  });
+  if (!any) wrap.innerHTML = `<p class="text-xs text-slate-400 px-1">No employees found for this selection.</p>`;
+}
+function initMgrEntry() {
+  document.getElementById("mgrDate").value = TODAY_DATE;
+  resetMgrRows();
+}
+function showMgrError(t) {
+  const el = document.getElementById("mgrError");
+  el.textContent = t; el.classList.toggle("hidden", !t);
+}
+function submitMgrEntries() {
+  showMgrError("");
+  const drive = mgrDrive();
+  if (!drive) { showMgrError("Choose a drive first."); return; }
+  const date = document.getElementById("mgrDate").value || TODAY_DATE;
+  const seen = new Set(), recs = [], errs = [], extraDepts = new Set();
+  document.querySelectorAll("#mgrRows .mgr-row").forEach((r, i) => {
+    const sid = r.querySelector(".mgr-name").value;
+    const raw = r.querySelector(".mgr-val").value, val = Number(raw);
+    const bad = m => { errs.push(`Row ${i + 1}: ${m}`); r.classList.add("border-rose-500"); r.classList.remove("border-slate-800"); };
+    r.classList.remove("border-rose-500"); r.classList.add("border-slate-800");
+    if (!sid && !raw) return;
+    if (r.querySelector(".mgr-name").dataset.fixed && !raw) return;      // department-list row left blank = not entered                                   // empty row, ignore
+    const st = state.staffList.find(s => s.id === sid);
+    if (!st) return bad("select the associate");
+    if (!driveDepts(drive).includes(st.dept)) extraDepts.add(st.dept);
+    if (!(val > 0)) return bad(`enter ${drive.type === "Amount" ? "price" : "qty"} for ${st.name}`);
+    if (seen.has(sid)) return bad(`${st.name} is added twice`);
+    seen.add(sid);
+    recs.push({ st, val });
+  });
+  if (errs.length) { showMgrError(errs.join("\n")); return; }
+  if (!recs.length) { showMgrError("Add at least one associate."); return; }
+  if (extraDepts.size) {                                 // keep reports / targets consistent
+    drive.depts = [...driveDepts(drive), ...extraDepts];
+    api("updateDrive", { id: drive.id, depts: drive.depts });
+    renderDrivesList();
+  }
+  const ts = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  let total = 0;
+  recs.forEach(({ st, val }, i) => {
+    const rec = { id: Date.now() + i, driveId: drive.id, staffId: st.id, staffName: st.name, staffDept: st.dept,
+                  targetDept: st.dept, value: val, date, timestamp: ts };
+    total += val;
+    state.entries.unshift(rec);
+    api("addEntry", { driveId: drive.id, entry: rec });
+  });
+  resetMgrRows();
+  renderAuditLogs(); renderDashboard();
+  showNotice("✓ Saved", `${recs.length} entries (${formatValue(drive.unit, total)}) saved to <strong>${escapeHtml(drive.name)}</strong> for ${formatDisplayDate(date)}.${extraDepts.size ? ` Section${extraDepts.size > 1 ? "s" : ""} <strong>${escapeHtml([...extraDepts].join(", "))}</strong> added to this drive.` : ""}`);
+}
+document.getElementById("mgrAddRow").addEventListener("click", addMgrRow);
+document.getElementById("mgrSubmit").addEventListener("click", submitMgrEntries);
+document.getElementById("mgrDrive").addEventListener("change", () => { refreshMgrEntry(); mgrDeptPrev = document.getElementById("mgrDept").value; resetMgrRows(); });
+document.getElementById("mgrDept").addEventListener("change", e => {
+  const filled = [...document.querySelectorAll("#mgrRows .mgr-val")].some(i => i.value);
+  if (filled && !confirm("Discard the values already entered and switch the list?")) { e.target.value = mgrDeptPrev; return; }
+  mgrDeptPrev = mgrDeptChoice = e.target.value;
+  resetMgrRows();
+});
+
+/* ======================================================================
+   DRIVE TARGETS MODAL (section-wise, weekday / weekend / specific dates)
+   ====================================================================== */
+const tgInp = "w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-xs text-white focus:outline-none focus:border-emerald-500";
+function ruleEditor(rule, depts, unit) {
+  const secs = (rule && rule.sections) || {};
+  return `<div class="rule-ed space-y-2">
+    <label class="block"><span class="text-[10px] font-semibold text-slate-400">Store total / day (${escapeHtml(unit)})</span>
+      <input data-k="total" type="number" step="any" min="0" value="${rule && rule.total ? rule.total : ""}" placeholder="e.g. 1000" class="${tgInp}"></label>
+    <p class="text-[10px] text-slate-500">or section-wise (gives departments and associates a target):</p>
+    <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">${depts.map(d => `
+      <label class="block"><span class="text-[10px] font-bold text-emerald-300">${escapeHtml(d)}</span>
+        <input data-k="sec" data-dept="${escapeHtml(d)}" type="number" step="any" min="0" value="${secs[d] || ""}" class="${tgInp}"></label>`).join("")}</div>
+  </div>`;
+}
+function readRule(box) {
+  const total = Number(box.querySelector('[data-k="total"]').value) || 0, sections = {};
+  box.querySelectorAll('[data-k="sec"]').forEach(i => { const v = Number(i.value); if (v > 0) sections[i.dataset.dept] = v; });
+  const hasSec = Object.keys(sections).length > 0;
+  if (!total && !hasSec) return null;
+  const r = {}; if (total) r.total = total; if (hasSec) r.sections = sections;
+  return r;
+}
+function overrideRow(date, rule, depts, unit) {
+  const div = document.createElement("div");
+  div.className = "ov-row rounded-xl border border-slate-800 bg-slate-950/60 p-3 space-y-2";
+  div.innerHTML = `<div class="flex items-center gap-2"><input type="date" data-k="date" value="${date || ""}" class="${tgInp} flex-1"><button type="button" class="ov-del text-rose-400 hover:text-rose-300 font-bold px-2">✕</button></div>${ruleEditor(rule, depts, unit)}`;
+  div.querySelector(".ov-del").addEventListener("click", () => div.remove());
+  return div;
+}
+let targetsDriveId = null;
+function openTargetsModal(id) {
+  const d = state.drives.find(x => x.id === id); if (!d) return;
+  targetsDriveId = id;
+  const t = d.targets || {}, depts = driveDepts(d), u = d.unit;
+  document.getElementById("targetsTitle").textContent = `${d.name} – Daily Targets (${u})`;
+  const block = (icon, title, hint, idv, rule) => `<div class="rounded-xl border border-slate-800 p-3 space-y-2">
+      <p class="text-xs font-extrabold text-white">${icon} ${title}</p>${hint ? `<p class="text-[10px] text-slate-500">${hint}</p>` : ""}
+      <div id="${idv}">${ruleEditor(rule, depts, u)}</div></div>`;
+  document.getElementById("targetsBody").innerHTML =
+    block("📅", "Weekdays (Mon–Fri)", "", "tgWeekday", t.weekday)
+    + block("🎉", "Weekend (Sat–Sun)", "Leave empty to use the weekday target.", "tgWeekend", t.weekend)
+    + `<div class="rounded-xl border border-slate-800 p-3 space-y-2">
+        <p class="text-xs font-extrabold text-white">📌 Specific dates</p>
+        <p class="text-[10px] text-slate-500">Overrides weekday / weekend for that exact day (e.g. festival day, or a different kg for one day).</p>
+        <div id="tgDates" class="space-y-2"></div>
+        <button id="tgAddDate" type="button" class="w-full bg-slate-800 hover:bg-slate-700 text-white border border-slate-700 py-2 rounded-xl text-xs font-bold transition">+ Add date</button>
+      </div>`;
+  const box = document.getElementById("tgDates");
+  Object.keys(t.dates || {}).sort().forEach(dt => box.appendChild(overrideRow(dt, t.dates[dt], depts, u)));
+  document.getElementById("tgAddDate").addEventListener("click", () => box.appendChild(overrideRow(TODAY_DATE, null, depts, u)));
+  document.getElementById("targetsModal").classList.remove("hidden");
+}
+document.getElementById("targetsCancel").addEventListener("click", () => document.getElementById("targetsModal").classList.add("hidden"));
+document.getElementById("targetsSave").addEventListener("click", () => {
+  const d = state.drives.find(x => x.id === targetsDriveId); if (!d) return;
+  const t = {}, wd = readRule(document.getElementById("tgWeekday")), we = readRule(document.getElementById("tgWeekend")), dates = {};
+  document.querySelectorAll("#tgDates .ov-row").forEach(row => {
+    const dt = row.querySelector('[data-k="date"]').value, r = readRule(row);
+    if (dt && r) dates[dt] = r;
+  });
+  if (wd) t.weekday = wd;
+  if (we) t.weekend = we;
+  if (Object.keys(dates).length) t.dates = dates;
+  d.targets = Object.keys(t).length ? t : null;
+  api("updateDrive", { id: d.id, targets: d.targets || {} });
+  document.getElementById("targetsModal").classList.add("hidden");
+  renderDrivesList(); renderDashboard();
+  if (state.activeTab === "reports") renderReports();
+});
+
+/* ======================================================================
+   DRIVE SECTIONS MODAL
+   ====================================================================== */
+let editDriveId = null, editDepts = new Set();
+function openDeptsModal(id) {
+  const d = state.drives.find(x => x.id === id); if (!d) return;
+  editDriveId = id; editDepts = new Set(driveDepts(d));
+  document.getElementById("deptsTitle").textContent = `${d.name} – Sections`;
+  renderDeptChips("editDeptChips", editDepts);
+  document.getElementById("deptsModal").classList.remove("hidden");
+}
+document.getElementById("deptsCancel").addEventListener("click", () => document.getElementById("deptsModal").classList.add("hidden"));
+document.getElementById("deptsSave").addEventListener("click", () => {
+  if (!editDepts.size) { showNotice("Select sections", "Pick at least one section for this drive."); return; }
+  const d = state.drives.find(x => x.id === editDriveId); if (!d) return;
+  d.depts = DEPARTMENTS.filter(x => editDepts.has(x));
+  api("updateDrive", { id: d.id, depts: d.depts });
+  document.getElementById("deptsModal").classList.add("hidden");
+  renderDrivesList(); renderQuickAdd();
+});
+
+/* ======================================================================
+   EMAIL SUMMARY
+   ====================================================================== */
+document.getElementById("emailSummaryBtn").addEventListener("click", () => {
+  const lines = [
+    "SMARTDRIVE RETAIL - CONSOLIDATED DRIVE SUMMARY",
+    `Date: ${formatDisplayDate(TODAY_DATE)}`,
+    "----------------------------------------------",
+    ...state.drives.map(d => {
+      const spanVal = state.entries.filter(e => e.driveId === d.id).reduce((s, e) => s + e.value, 0);
+      const todayVal = state.entries.filter(e => e.driveId === d.id && e.date === TODAY_DATE).reduce((s, e) => s + e.value, 0);
+      const pct = Math.round((spanVal / Math.max(1, d.target)) * 100);
+      return `${d.name}: Span ${spanVal}/${d.target} ${d.unit} (${pct}%) | Today: ${todayVal} ${d.unit}`;
+    })
+  ].join("\n");
+  window.open(`mailto:?subject=SmartDrive Retail Performance Report&body=${encodeURIComponent(lines)}`);
+});
+
+/* ======================================================================
+   BOOT
+   ====================================================================== */
+function boot() {
+  state.currentStaff = loadSession();   // stay signed in after browser/tab is closed
+  renderDeptChips("newDriveDepts", newDriveDepts);
+  initMgrEntry();
+  document.getElementById("headerSubtitle").textContent = `Live Campaign & Floor Tracker • ${formatDisplayDate(TODAY_DATE)}`;
+  document.getElementById("entryDate").value = TODAY_DATE;
+  document.getElementById("dashCustomDate").value = YESTERDAY_DATE;
+  renderTargetDeptSelect();
+  renderSession();
+  checkSessionExpiry();
+  setInterval(checkSessionExpiry, 30000);
+  document.addEventListener("visibilitychange", checkSessionExpiry);
+  try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist(); } catch (_) {}   // ask the browser not to clear saved login
+}
+/* ======================================================================
+   MANAGER TOOLS MENU (hamburger)
+   ====================================================================== */
+const MGR_PANELS = { counts: "Enter Associate Counts", drives: "Create & Manage Sales Drives", staff: "Staff Directory", logs: "Real-Time Audit Logs" };
+let mgrOpenPanel = null;
+function updateMenuCounts() {
+  document.getElementById("menuStaffCount").textContent = state.staffList.length;
+  document.getElementById("menuLogCount").textContent = state.entries.length;
+}
+function setMenuOpen(open) {
+  const list = document.getElementById("mgrMenuList"), btn = document.getElementById("mgrMenuBtn");
+  if (open) updateMenuCounts();
+  list.classList.toggle("hidden", !open);
+  btn.setAttribute("aria-expanded", String(open));
+  document.getElementById("mgrMenuChevron").style.transform = open ? "rotate(180deg)" : "";
+}
+function showMgrPanel(key) {
+  mgrOpenPanel = (key && mgrOpenPanel !== key) ? key : null;       // tapping the open item again closes it
+  document.querySelectorAll("[data-mgr-panel]").forEach(p => p.classList.toggle("hidden", p.dataset.mgrPanel !== mgrOpenPanel));
+  document.querySelectorAll(".mgr-item").forEach(b => {
+    const on = b.dataset.mgrOpen === mgrOpenPanel;
+    b.classList.toggle("bg-emerald-950", on); b.classList.toggle("text-emerald-300", on); b.classList.toggle("text-slate-200", !on);
+  });
+  document.getElementById("mgrMenuCurrent").textContent = mgrOpenPanel ? MGR_PANELS[mgrOpenPanel] : "Tap to open: counts, drives, staff, logs";
+  setMenuOpen(false);
+  if (mgrOpenPanel) document.querySelector(`[data-mgr-panel="${mgrOpenPanel}"]`).scrollIntoView({ behavior: "smooth", block: "start" });
+}
+document.getElementById("mgrMenuBtn").addEventListener("click", e => {
+  e.stopPropagation();
+  setMenuOpen(document.getElementById("mgrMenuList").classList.contains("hidden"));
+});
+document.querySelectorAll("[data-mgr-open]").forEach(b => b.addEventListener("click", () => showMgrPanel(b.dataset.mgrOpen)));
+document.addEventListener("click", e => { if (!document.getElementById("mgrMenuWrap").contains(e.target)) setMenuOpen(false); });
+document.addEventListener("keydown", e => { if (e.key === "Escape") setMenuOpen(false); });
+document.querySelectorAll("[data-mgr-panel]").forEach(p => {       // small close button on each panel
+  const x = document.createElement("button");
+  x.type = "button"; x.textContent = "✕"; x.title = "Close";
+  x.className = "absolute top-3 right-3 w-7 h-7 flex items-center justify-center rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold";
+  x.addEventListener("click", () => showMgrPanel(null));
+  p.appendChild(x);
+});
+
+boot();
+if (LIVE) {
+  flushOutbox().then(() => loadFromSheet()).then(() => { renderSession(); refreshAll(); });
+  setInterval(async () => {
+    if (localToday() !== TODAY_DATE) { location.reload(); return; }   // new day -> refresh (login is kept)
+    if (!(await flushOutbox())) return;
+    if (await loadFromSheet()) refreshAll();                          // multi-phone live refresh
+  }, 30000);
+}
+</script>
+</body>
+</html>
