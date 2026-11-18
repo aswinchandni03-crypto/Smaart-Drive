@@ -264,11 +264,12 @@
           <div class="flex items-center gap-2">
             <svg class="w-5 h-5 text-amber-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 16.8 5.8 21.3l2.4-7.4L2 9.4h7.6z"/></svg>
             <div>
-              <h3 class="font-extrabold text-sm text-white">Top 5 Performers</h3>
+              <h3 id="topTitle" class="font-extrabold text-sm text-white">Top 5 Performers</h3>
               <p class="text-[10px] sm:text-[11px] text-slate-400" id="topSubtitle"></p>
             </div>
           </div>
           <div class="flex items-center gap-1.5">
+            <select id="topNSelect" class="bg-slate-950 border border-slate-700 rounded-lg px-1.5 py-1 text-[11px] text-white font-semibold focus:outline-none"><option value="5">Top 5</option><option value="10">Top 10</option></select>
             <select id="topSort" class="bg-slate-950 border border-slate-700 rounded-lg px-1.5 py-1 text-[11px] text-white font-semibold focus:outline-none"></select>
             <button id="partyPopBtn" class="bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/50 px-2.5 py-1 rounded-lg text-[11px] font-extrabold transition">🎉 Pop</button>
           </div>
@@ -282,10 +283,11 @@
           <div class="flex items-center gap-2">
             <svg class="w-5 h-5 text-rose-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
             <div>
-              <h3 class="font-extrabold text-sm text-white">Lowest 5 &amp; Zero Performers</h3>
+              <h3 id="lowTitle" class="font-extrabold text-sm text-white">Lowest 5 &amp; Zero Performers</h3>
               <p class="text-[10px] sm:text-[11px] text-slate-400">Lowest counts first (zero excluded)</p>
             </div>
           </div>
+          <select id="lowNSelect" class="bg-slate-950 border border-slate-700 rounded-lg px-1.5 py-1 text-[11px] text-white font-semibold focus:outline-none"><option value="5">Lowest 5</option><option value="10">Lowest 10</option></select>
           <select id="lowestDeptSelect" class="bg-slate-950 border border-slate-700 rounded-lg px-1.5 py-1 text-[11px] text-white font-semibold focus:outline-none"></select>
         </div>
         <div id="bottomList" class="space-y-2 mt-3"></div>
@@ -315,6 +317,7 @@
             <h3 class="font-extrabold text-sm text-white">WhatsApp Tracker Export</h3>
             <p class="text-[10px] sm:text-[11px] text-slate-400">Ready-to-paste format</p>
           </div>
+          <select id="trackerModeSelect" class="bg-slate-950 border border-slate-700 rounded-lg px-2 py-1 text-[11px] text-white font-semibold focus:outline-none"><option value="both">Count added + Zero</option><option value="count">Count added only</option><option value="zero">Zero only</option></select>
           <select id="trackerDeptSelect" class="bg-slate-950 border border-slate-700 rounded-lg px-2 py-1 text-[11px] text-white font-semibold focus:outline-none"></select>
         </div>
         <pre id="trackerPre" class="bg-slate-950 border border-slate-800 rounded-xl p-3 sm:p-4 text-[10px] sm:text-xs font-mono text-emerald-300 whitespace-pre-wrap leading-relaxed overflow-x-auto"></pre>
@@ -698,7 +701,19 @@
         <span class="text-xs font-bold text-slate-400">Drive:</span>
         <select id="salesDriveSelect" class="bg-slate-950 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-white font-semibold focus:outline-none"></select>
       </div>
+      <div class="flex flex-wrap items-center gap-2">
+      <button id="salesCopyBtn" type="button" class="bg-emerald-500 hover:bg-emerald-400 text-slate-950 px-3 py-1.5 rounded-xl text-xs font-extrabold transition">📋 Copy image</button>
+      <button id="salesShareBtn" type="button" class="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 px-3 py-1.5 rounded-xl text-xs font-bold transition">📤 Share / Save image</button>
       <button id="salesManageBtn" type="button" class="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 px-3 py-1.5 rounded-xl text-xs font-bold transition">🔒 Upload / Edit sales data</button>
+      </div>
+    </div>
+
+    <!-- Share as image (WhatsApp) -->
+    <div class="flex flex-wrap items-center gap-2 bg-slate-900 border border-slate-800 rounded-2xl p-3">
+      <span class="text-xs font-bold text-slate-400">Share dashboard image:</span>
+      <button id="salesImgShare" type="button" class="bg-emerald-500 hover:bg-emerald-400 text-slate-950 px-3 py-1.5 rounded-xl text-xs font-extrabold transition">📤 Share (WhatsApp)</button>
+      <button id="salesImgCopy" type="button" class="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 px-3 py-1.5 rounded-xl text-xs font-bold transition">📋 Copy image</button>
+      <button id="salesImgSave" type="button" class="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 px-3 py-1.5 rounded-xl text-xs font-bold transition">⬇ Download</button>
     </div>
 
     <!-- Manager-only upload panel -->
@@ -1063,6 +1078,7 @@ const state = {
 
 state.topSortMode = "achieved";
 state.reportType = "All";
+state.topN = 5; state.lowN = 5; state.trackerMode = "both";
 state.openDays = new Set();            // drives whose day-wise list the associate has opened (collapsed by default)
 document.addEventListener("click", e => {
   const b = e.target.closest("[data-daytoggle]"); if (!b) return;
@@ -1780,10 +1796,10 @@ function computeReportsData() {
   const k = state.topSortMode;
   const top5 = ranked.filter(s => s.achieved > 0)          // zero performers never appear
     .sort((a, b) => (b[k] - a[k]) || (b.achieved - a.achieved) || a.name.localeCompare(b.name))
-    .slice(0, 5);
+    .slice(0, state.topN);
   const lowDept = (state.lowestDept === "All" || dl.includes(state.lowestDept)) ? state.lowestDept : "All";
   const lowPool = rankedAll.filter(s => lowDept === "All" || s.dept === lowDept);
-  const lowest5 = lowPool.filter(s => s.achieved > 0).sort((a, b) => a.achieved - b.achieved || a.name.localeCompare(b.name)).slice(0, 5);
+  const lowest5 = lowPool.filter(s => s.achieved > 0).sort((a, b) => a.achieved - b.achieved || a.name.localeCompare(b.name)).slice(0, state.lowN);
   const zeroPerformers = lowPool.filter(s => s.achieved === 0).sort((a, b) => a.name.localeCompare(b.name));
 
   const deptRankings = dl.map(deptName => {
@@ -1801,33 +1817,39 @@ function computeReportsData() {
     : formatDisplayDate(state.reportDate);
   const money = n => drive.unit === "₹" ? "₹" + n.toLocaleString() : n;
   const totTxt = (a, t) => t > 0 ? `${money(a)}/${money(t)}` : `${money(a)}`;
-  const trackerBlock = staffArr => {                                   // numbered lines + total for one department
-    let total = 0, tgt = 0;
-    const lines = staffArr.map((st, i) => {
-      const achieved = driveEntries.filter(e => e.staffId === st.id).reduce((s, e) => s + e.value, 0);
-      total += achieved;
-      const targetVal = staffTargetOver(st, drive, tDates);
-      tgt += targetVal;
-      const displayName = achieved === 0 ? st.name.toLowerCase() : st.name;
-      return `${i + 1}.${displayName}=${qt(achieved, targetVal)}`;
-    });
-    return { lines, total, tgt: round1(tgt) };
+  const trackerMode = state.trackerMode;                               // "both" = count added + zero (separate) | "count" | "zero"
+  const trackerBlock = staffArr => {                                   // largest -> smallest; people with a count and zero people listed separately
+    const rows = staffArr.map(st => ({
+      st, achieved: driveEntries.filter(e => e.staffId === st.id).reduce((s, e) => s + e.value, 0), targetVal: staffTargetOver(st, drive, tDates)
+    }));
+    const total = rows.reduce((n, r) => n + r.achieved, 0), tgt = round1(rows.reduce((n, r) => n + r.targetVal, 0));
+    const added = rows.filter(r => r.achieved > 0).sort((a, b) => b.achieved - a.achieved || a.st.name.localeCompare(b.st.name));
+    const zero = rows.filter(r => r.achieved === 0).sort((a, b) => a.st.name.localeCompare(b.st.name));
+    const fmt = (r, i) => `${i + 1}.${r.st.name}=${qt(r.achieved, r.targetVal)}`;
+    const lines = [];
+    if (trackerMode === "both") {
+      lines.push(`*Count added (${added.length})*`, ...(added.length ? added.map(fmt) : ["None"]), ``, `*Zero (${zero.length})*`, ...(zero.length ? zero.map(fmt) : ["None"]));
+    } else if (trackerMode === "count") lines.push(...added.map(fmt));
+    else lines.push(...zero.map(fmt));
+    return { lines, total, tgt, empty: trackerMode === "count" ? !added.length : trackerMode === "zero" ? !zero.length : false };
   };
   let whatsappText;
+  const modeTag = trackerMode === "count" ? " (Count added)" : trackerMode === "zero" ? " (Zero)" : "";
   if (activeTrackerDept === "All") {
     let grand = 0;
     const blocks = [];
     dl.forEach(dep => {
       const staffArr = state.staffList.filter(s => s.dept === dep);
       if (!staffArr.length) return;
-      const { lines, total, tgt } = trackerBlock(staffArr);
+      const { lines, total, tgt, empty } = trackerBlock(staffArr);
       grand += total;
-      blocks.push([`*${dep}*`, ...lines, `${dep} Total = ${totTxt(total, tgt)}`].join("\n"));
+      if (empty) return;
+      blocks.push([`*${dep}*`, ...lines, ...(trackerMode === "zero" ? [] : [`${dep} Total = ${totTxt(total, tgt)}`])].join("\n"));
     });
-    whatsappText = [`${drive.name} Tracker All`, ``, `${trackerDateLabel}`, ``, blocks.join("\n\n"), ``, `Grand Total = ${totTxt(grand, storeTargetOver(drive, tDates))}`].join("\n");
+    whatsappText = [`${drive.name} Tracker All${modeTag}`, ``, `${trackerDateLabel}`, ``, blocks.join("\n\n") || "None", ...(trackerMode === "zero" ? [] : [``, `Grand Total = ${totTxt(grand, storeTargetOver(drive, tDates))}`])].join("\n");
   } else {
-    const { lines, total, tgt } = trackerBlock(state.staffList.filter(s => s.dept === activeTrackerDept));
-    whatsappText = [`${drive.name} Tracker ${activeTrackerDept}`, ``, `${trackerDateLabel}`, ``, ...lines, ``, `Total = ${totTxt(total, tgt)}`].join("\n");
+    const { lines, total, tgt, empty } = trackerBlock(state.staffList.filter(s => s.dept === activeTrackerDept));
+    whatsappText = [`${drive.name} Tracker ${activeTrackerDept}${modeTag}`, ``, `${trackerDateLabel}`, ``, ...(empty ? ["None"] : lines), ...(trackerMode === "zero" ? [] : [``, `Total = ${totTxt(total, tgt)}`])].join("\n");
   }
 
   const knownIds = new Set(allStaff().map(s => s.id)), orphanMap = {};
@@ -1992,6 +2014,11 @@ function renderReports() {
 
   // Tracker
   document.getElementById("trackerPre").textContent = data.whatsappText;
+  document.getElementById("trackerModeSelect").value = state.trackerMode;
+  document.getElementById("topNSelect").value = String(state.topN);
+  document.getElementById("lowNSelect").value = String(state.lowN);
+  document.getElementById("topTitle").textContent = `Top ${state.topN} Performers`;
+  document.getElementById("lowTitle").innerHTML = `Lowest ${state.lowN} &amp; Zero Performers`;
   const trackerSel = document.getElementById("trackerDeptSelect");
   trackerSel.classList.remove("hidden");
   trackerSel.innerHTML = ["All", ...driveDepts(drive)].map(d => `<option value="${escapeHtml(d)}"${d === data.activeTrackerDept ? " selected" : ""}>Dept: ${escapeHtml(d)}</option>`).join("");
@@ -3305,6 +3332,11 @@ document.querySelectorAll("[data-mgr-panel]").forEach(p => {       // small clos
 /* ======================================================================
    SALES DASHBOARD – system (POS) sales only, independent of staff entries
    ====================================================================== */
+/* Leaderboard: Top 5 / Top 10, Lowest 5 / Lowest 10, and WhatsApp tracker view (count added / zero) */
+document.getElementById("topNSelect").addEventListener("change", e => { state.topN = Number(e.target.value) || 5; renderReports(); });
+document.getElementById("lowNSelect").addEventListener("change", e => { state.lowN = Number(e.target.value) || 5; renderReports(); });
+document.getElementById("trackerModeSelect").addEventListener("change", e => { state.trackerMode = e.target.value; renderReports(); });
+
 state.sales = []; state.salesConfig = {}; state.salesDriveId = null; state.salesPanelOpen = false; state.afterUnlock = null;
 const inr = (n, d = 0) => Number(n || 0).toLocaleString("en-IN", { minimumFractionDigits: d, maximumFractionDigits: d });
 function salesDrive() {
@@ -3553,6 +3585,174 @@ document.getElementById("salesDash").addEventListener("click", e => {
     saleMsg(`Editing ${formatDisplayDate(rec.date)} – change the numbers and tap “Save day”.`, true);
     document.getElementById("salesManage").scrollIntoView({ behavior: "smooth", block: "start" });
   }
+});
+
+/* ======================================================================
+   SALES DASHBOARD -> IMAGE (same portrait ratio as the reference: 1217 x 1292)
+   Drawn directly on a canvas, so it needs no extra library and always has the same layout.
+   ====================================================================== */
+function drawSalesImage() {
+  const drive = salesDrive(); if (!drive) return null;
+  const c = computeSales(drive); if (!c.days.length) return null;
+  const cfg = c.cfg, S = 2, W = 1217, H = 1292;
+  const cv = document.createElement("canvas"); cv.width = W * S; cv.height = H * S;
+  const g = cv.getContext("2d"); g.scale(S, S);
+  const F = `"Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif`;
+  const EMO = `"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif`;
+  const rr = (x, y, w, h, r) => { g.beginPath(); g.moveTo(x + r, y); g.arcTo(x + w, y, x + w, y + h, r); g.arcTo(x + w, y + h, x, y + h, r); g.arcTo(x, y + h, x, y, r); g.arcTo(x, y, x + w, y, r); g.closePath(); };
+  const box = (x, y, w, h, r, fill, stroke) => { rr(x, y, w, h, r); if (fill) { g.fillStyle = fill; g.fill(); } if (stroke) { g.strokeStyle = stroke; g.lineWidth = 2; g.stroke(); } };
+  const T = (t, x, y, size, color, weight = "700", align = "left", maxW = 0) => {
+    let s = size; g.font = `${weight} ${s}px ${F}`;
+    if (maxW) while (g.measureText(t).width > maxW && s > 9) { s--; g.font = `${weight} ${s}px ${F}`; }
+    g.fillStyle = color; g.textAlign = align; g.textBaseline = "middle"; g.fillText(t, x, y);
+  };
+  const E = (ch, x, y, size) => { g.font = `${size}px ${EMO}`; g.fillStyle = "#000"; g.textAlign = "center"; g.textBaseline = "middle"; g.fillText(ch, x, y); };
+  const NAVY = "#0b2a6b", RED = "#d5121f", YEL = "#fde047";
+  const pct = v => v === null ? "–" : v.toFixed(2) + "%";
+
+  // background
+  const bg = g.createLinearGradient(0, 0, 0, H); bg.addColorStop(0, "#eef4fc"); bg.addColorStop(1, "#dce8f8");
+  g.fillStyle = bg; g.fillRect(0, 0, W, H);
+  // header swooshes
+  g.fillStyle = NAVY; g.beginPath(); g.moveTo(360, 0); g.lineTo(W, 0); g.lineTo(W, 135); g.bezierCurveTo(900, 175, 600, 90, 360, 0); g.fill();
+  g.fillStyle = "#d5121f"; g.beginPath(); g.moveTo(520, 0); g.lineTo(W, 0); g.lineTo(W, 70); g.bezierCurveTo(880, 95, 660, 60, 520, 0); g.fill();
+  // title block
+  box(-40, 12, 485, 140, 52, RED);
+  g.fillStyle = "#fff"; [[30, 120, 18, 30], [58, 104, 18, 46], [86, 84, 18, 66]].forEach(b => { g.fillRect(b[0], b[1], b[2], b[3]); });
+  T("EVENT", 122, 42, 44, "#fff", "800", "left", 300);
+  T("PERFORMANCE", 122, 84, 44, "#fff", "800", "left", 305);
+  T("DASHBOARD", 122, 126, 48, YEL, "900", "left", 305);
+  T(drive.name, 1195, 52, 42, "#fff", "800", "right", 640);
+  T(`${formatDisplayDate(cfg.startDate)} → ${formatDisplayDate(cfg.endDate)}  •  ${c.totalDays} days`, 1195, 96, 22, "#e2e8f0", "600", "right", 640);
+
+  // target bar
+  box(66, 170, 1084, 102, 42, NAVY);
+  g.strokeStyle = "#fff"; g.lineWidth = 5; [30, 19].forEach(r => { g.beginPath(); g.arc(158, 221, r, 0, Math.PI * 2); g.stroke(); });
+  g.fillStyle = "#fff"; g.beginPath(); g.arc(158, 221, 6, 0, Math.PI * 2); g.fill();
+  T("Event Target", 247, 195, 30, "#fff", "700");
+  T(cfg.valueTarget ? "₹" + inr(cfg.valueTarget) : "Not set", 245, 241, 50, YEL, "900", "left", 320);
+  g.fillStyle = "rgba(255,255,255,.7)"; g.fillRect(580, 192, 3, 62);
+  E("🛒", 686, 222, 62);
+  T("Per Day Target", 772, 195, 30, "#fff", "700");
+  T(`${cfg.unitsPerDay ? inr(cfg.unitsPerDay) + " Units" : "– Units"}  |  ${c.perDayVal ? "₹" + inr(c.perDayVal) : "–"}`, 756, 240, 44, YEL, "900", "left", 385);
+
+  // donut
+  box(5, 300, 335, 392, 38, "#fff", "#dbe6f5");
+  const cx = 172, cy = 480, R = 132;
+  g.lineWidth = 34; g.lineCap = "butt"; g.strokeStyle = "#d9d9d9"; g.beginPath(); g.arc(cx, cy, R, 0, Math.PI * 2); g.stroke();
+  const frac = Math.min(1, Math.max(0, (c.evAch || 0) / 100));
+  if (frac > 0) { g.strokeStyle = "#dc1f26"; g.beginPath(); g.arc(cx, cy, R, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * frac); g.stroke(); }
+  T("Event", cx, 405, 38, "#111", "800", "center"); T("Achievement", cx, 447, 38, "#111", "800", "center", 200);
+  T(pct(c.evAch), cx, 520, 86, RED, "900", "center", 215);
+
+  // stat cards
+  const stat = (i, icon, l1, l2, val, extra) => {
+    const y = 300 + i * 100;
+    box(347, y, 478, 90, 24, "#fff", "#dbe6f5");
+    E(icon, 392, y + 46, 44);
+    if (l2) { T(l1, 434, y + 30, 27, NAVY, "800", "left", 156); T(l2, 434, y + 62, 24, NAVY, "600", "left", 156); }
+    else T(l1, 434, y + 45, 27, NAVY, "800", "left", 156);
+    box(597, y + 8, 221, 74, 18, "#fdeab6");
+    if (extra) { T(val, 707, y + 34, 38, "#111", "900", "center", 205); T(extra, 707, y + 65, 14, "#444", "600", "center", 205); }
+    else T(val, 707, y + 45, 36, "#111", "900", "center", 205);
+  };
+  stat(0, "🪙", "Total Sales", `(${c.n} Days)`, "₹" + inr(c.value, 2));
+  stat(1, "📦", "Total Quantity", `(${c.n} Days)`, inr(c.qty) + " Units");
+  stat(2, "🎯", "Quantity", "Achievement", pct(c.qtyAch), c.tgtQty ? `(vs. ${c.n}-day Target: ${inr(c.tgtQty)} Units)` : "");
+  stat(3, "📈", "Sales", "Achievement", pct(c.salesAch), c.tgtVal ? `(vs. ${c.n}-day Target: ₹${inr(c.tgtVal)})` : "");
+
+  // right cards
+  box(840, 290, 370, 125, 28, "#fde8ea", "#f3c4c8");
+  E("📅", 892, 352, 56); T("Days Remaining", 1062, 325, 30, "#111", "800", "center", 215); T(String(c.daysLeft), 1062, 382, 74, RED, "900", "center");
+  box(840, 425, 370, 128, 28, "#fde8ea", "#f3c4c8");
+  E("🎯", 884, 462, 46); T("Balance to Achieve", 1050, 462, 30, "#111", "800", "center", 250);
+  box(862, 490, 326, 52, 26, "#e11919"); T(cfg.valueTarget ? "₹" + inr(c.balance, 2) : "–", 1025, 517, 38, "#fff", "900", "center", 300);
+  box(840, 563, 370, 135, 28, "#fde8ea", "#f3c4c8");
+  E("📊", 884, 596, 46); T("Required Daily Sales", 1050, 590, 30, "#111", "800", "center", 250); T("(to meet Event Target)", 1050, 618, 22, "#333", "600", "center", 250);
+  box(862, 638, 326, 52, 26, NAVY); T(cfg.valueTarget ? "₹" + inr(c.required, 2) : "–", 1025, 665, 38, "#fff", "900", "center", 300);
+
+  // table
+  const MAXR = 22, shown = c.days.slice(-MAXR), rowH = Math.min(35, 428 / shown.length), fs = Math.min(21, Math.floor(rowH * 0.62));
+  box(12, 728, 504, 530, 14, "#fff", "#c3cfe2");
+  g.fillStyle = NAVY; g.fillRect(14, 736, 500, 44);
+  T("Date", 98, 758, 23, "#fff", "800", "center"); T("Quantity", 251, 758, 23, "#fff", "800", "center"); T("Sales Value (₹)", 417, 758, 23, "#fff", "800", "center", 190);
+  g.strokeStyle = "#fff"; g.lineWidth = 1.5; [182, 320].forEach(x => { g.beginPath(); g.moveTo(x, 736); g.lineTo(x, 780); g.stroke(); });
+  shown.forEach((x, i) => {
+    const y = 780 + i * rowH;
+    g.fillStyle = x.has ? (i % 2 ? "#f7f9fd" : "#fff") : "#fde8ea"; g.fillRect(14, y, 500, rowH);
+    g.strokeStyle = "#c9d3e3"; g.lineWidth = 1; g.beginPath(); g.moveTo(14, y + rowH); g.lineTo(514, y + rowH); g.stroke();
+    T(formatDisplayDate(x.date), 98, y + rowH / 2, fs, "#111", "500", "center");
+    T(x.has ? inr(x.qty) : "–", 251, y + rowH / 2, fs, "#111", "500", "center");
+    T(x.has ? inr(x.value, 2) : "no data", 500, y + rowH / 2, fs, x.has ? "#111" : "#d5121f", "500", "right");
+  });
+  const ty = 780 + shown.length * rowH;
+  g.fillStyle = "#fde224"; g.fillRect(14, ty, 500, 46);
+  T(`Total (${c.n} Days)`, 98, ty + 23, 21, "#111", "900", "center", 160); T(inr(c.qty), 251, ty + 23, 24, "#111", "900", "center");
+  T("₹" + inr(c.value, 2), 500, ty + 23, 24, "#111", "900", "right", 185);
+  if (c.days.length > MAXR) T(`Last ${MAXR} days shown • totals cover all ${c.n} days`, 264, ty + 66, 15, "#555", "600", "center");
+
+  // chart
+  box(526, 728, 682, 530, 26, "#fff", "#dbe6f5");
+  box(668, 742, 408, 50, 22, NAVY); T("Daily Sales Trend (Value ₹)", 872, 767, 27, "#fff", "800", "center", 380);
+  const L = 612, Rr = 1190, Tp = 842, Bt = 1150, n = c.days.length, maxV = niceMax(Math.max(0, ...c.days.map(d => d.value)));
+  const yv = v => Bt - (v / maxV) * (Bt - Tp);
+  for (let i = 0; i <= 5; i++) {
+    const v = maxV / 5 * i, yy = yv(v);
+    g.strokeStyle = "#dcdcdc"; g.lineWidth = 1; g.beginPath(); g.moveTo(L, yy); g.lineTo(Rr, yy); g.stroke();
+    T(inr(v), L - 8, yy, 19, "#333", "500", "right");
+  }
+  g.strokeStyle = "#444"; g.lineWidth = 1.5; g.beginPath(); g.moveTo(L, Tp - 8); g.lineTo(L, Bt); g.lineTo(Rr, Bt); g.stroke();
+  const sl = (Rr - L - 6) / n, bw = Math.min(46, sl * 0.62), pts = [];
+  c.days.forEach((d, i) => {
+    const x = L + 4 + sl * i + sl / 2, y = yv(d.value);
+    const gr = g.createLinearGradient(0, y, 0, Bt); gr.addColorStop(0, "#2a4fae"); gr.addColorStop(1, NAVY);
+    g.fillStyle = gr; g.fillRect(x - bw / 2, y, bw, Bt - y); pts.push([x, y]);
+    g.save(); g.translate(x + 4, Bt + 12); g.rotate(-Math.PI / 4);
+    g.font = `500 ${n > 30 ? 13 : 18}px ${F}`; g.fillStyle = "#222"; g.textAlign = "right"; g.textBaseline = "middle";
+    if (n <= 31 || i % 2 === 0) g.fillText(d.date.slice(8) + "/" + d.date.slice(5, 7), 0, 0);
+    g.restore();
+  });
+  if (pts.length > 1) { g.strokeStyle = "#dc2626"; g.lineWidth = 3; g.beginPath(); pts.forEach((p, i) => i ? g.lineTo(p[0], p[1]) : g.moveTo(p[0], p[1])); g.stroke(); }
+  g.fillStyle = "#dc2626"; pts.forEach(p => { g.beginPath(); g.arc(p[0], p[1], 4.5, 0, Math.PI * 2); g.fill(); });
+  if (n <= 16) c.days.forEach((d, i) => { if (d.value > 0) T(inr(d.value), pts[i][0], pts[i][1] - 14, n > 12 ? 16 : 19, "#111", "800", "center"); });
+  else { const mi = c.days.reduce((b, d, i) => d.value > c.days[b].value ? i : b, 0); T(inr(c.days[mi].value), pts[mi][0], pts[mi][1] - 14, 18, "#111", "800", "center"); }
+
+  T(`System sales data • ${drive.name} • updated ${formatDisplayDate(TODAY_DATE)}`, W / 2, 1276, 17, "#44546f", "600", "center");
+  return cv;
+}
+async function salesImageBlob() {
+  const cv = drawSalesImage();
+  if (!cv) { showNotice("No data", "Upload the day-wise system sales first, then share the image."); return null; }
+  return await new Promise(res => cv.toBlob(res, "image/png"));
+}
+function salesImageName() { const d = salesDrive(); return `SalesDashboard_${(d ? d.name : "drive").replace(/[^A-Za-z0-9]+/g, "_")}_${TODAY_DATE}.png`; }
+function downloadBlob(blob, name) {
+  const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = name;
+  document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+}
+function flashBtn(id, text) { const b = document.getElementById(id), o = b.textContent; b.textContent = text; setTimeout(() => { b.textContent = o; }, 2000); }
+document.getElementById("salesImgSave").addEventListener("click", async () => {
+  const blob = await salesImageBlob(); if (!blob) return;
+  downloadBlob(blob, salesImageName()); flashBtn("salesImgSave", "✓ Saved");
+});
+document.getElementById("salesImgCopy").addEventListener("click", async () => {
+  const blob = await salesImageBlob(); if (!blob) return;
+  try {
+    await navigator.clipboard.write([new ClipboardItem({ "image/png": blob })]);
+    flashBtn("salesImgCopy", "✓ Copied – paste in WhatsApp");
+  } catch (_) {
+    downloadBlob(blob, salesImageName());
+    showNotice("Image downloaded", "This browser did not allow copying the image, so it was downloaded instead. Attach it in WhatsApp from your downloads / gallery.");
+  }
+});
+document.getElementById("salesImgShare").addEventListener("click", async () => {
+  const blob = await salesImageBlob(); if (!blob) return;
+  const file = new File([blob], salesImageName(), { type: "image/png" });
+  try {
+    if (navigator.canShare && navigator.canShare({ files: [file] })) { await navigator.share({ files: [file], title: "Sales Dashboard" }); return; }
+  } catch (e) { if (e && e.name === "AbortError") return; }
+  try { await navigator.clipboard.write([new ClipboardItem({ "image/png": blob })]); flashBtn("salesImgShare", "✓ Copied – paste in WhatsApp"); }
+  catch (_) { downloadBlob(blob, salesImageName()); showNotice("Image downloaded", "Sharing is not available in this browser, so the image was downloaded. Attach it in WhatsApp from your downloads / gallery."); }
 });
 
 boot();
