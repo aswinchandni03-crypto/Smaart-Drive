@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-<title>Smart Drive Retail</title>
+<title>SmartDrive Retail</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <script>
   tailwind.config = {
@@ -94,15 +94,17 @@
           <svg class="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 17l6-6 4 4 8-8"/><path stroke-linecap="round" stroke-linejoin="round" d="M17 7h4v4"/></svg>
         </div>
         <div>
-          <h1 class="font-extrabold text-base sm:text-lg tracking-tight text-white leading-tight">Smart Drive Retail</h1>
+          <h1 class="font-extrabold text-base sm:text-lg tracking-tight text-white leading-tight">SmartDrive Retail</h1>
           <p class="text-[10px] sm:text-[11px] text-slate-400" id="headerSubtitle">Live Campaign &amp; Floor Tracker</p>
         </div>
       </div>
     </div>
-    <div class="flex items-center justify-between sm:justify-end gap-2">
-      <nav class="flex bg-slate-950 p-1 rounded-xl border border-slate-800 text-xs w-full sm:w-auto justify-between sm:justify-start">
+    <div class="flex items-center justify-between sm:justify-end gap-2 min-w-0">
+      <nav class="flex bg-slate-950 p-1 rounded-xl border border-slate-800 text-xs w-full sm:w-auto justify-between sm:justify-start overflow-x-auto">
         <button data-tab="entry" class="tab-btn px-2.5 sm:px-3 py-1.5 rounded-lg font-semibold transition whitespace-nowrap bg-emerald-500 text-slate-950 shadow-sm">Floor Entry</button>
-        <button data-tab="reports" class="tab-btn px-2.5 sm:px-3 py-1.5 rounded-lg font-semibold transition whitespace-nowrap text-slate-400 hover:text-white">Reports</button>
+        <button data-tab="reports" class="tab-btn px-2.5 sm:px-3 py-1.5 rounded-lg font-semibold transition whitespace-nowrap text-slate-400 hover:text-white">Leaderboard</button>
+        <button data-tab="ranking" class="tab-btn px-2.5 sm:px-3 py-1.5 rounded-lg font-semibold transition whitespace-nowrap text-slate-400 hover:text-white">Full Staff Ranking</button>
+        <button data-tab="sales" class="tab-btn px-2.5 sm:px-3 py-1.5 rounded-lg font-semibold transition whitespace-nowrap text-slate-400 hover:text-white">Sales Dashboard</button>
         <button data-tab="manager" class="tab-btn px-2.5 sm:px-3 py-1.5 rounded-lg font-semibold transition whitespace-nowrap text-slate-400 hover:text-white">Manager</button>
       </nav>
     </div>
@@ -204,7 +206,7 @@
     </div>
   </section>
 
-  <!-- ========================= TAB: REPORTS ========================= -->
+  <!-- ========================= TAB: LEADERBOARD ========================= -->
   <section id="tab-reports" class="tab-panel space-y-4 sm:space-y-6 hidden">
 
     <!-- Filters -->
@@ -217,6 +219,8 @@
         <div class="flex flex-wrap items-center gap-1.5 sm:gap-2">
           <span class="text-xs font-bold text-slate-400">Date:</span>
           <div id="reportDatePills" class="flex flex-wrap gap-1.5"></div>
+          <input id="reportDateInput" type="date" title="Pick a date from the calendar" class="bg-slate-950 border border-slate-700 rounded-lg px-2 py-1 text-[11px] sm:text-xs text-white font-semibold focus:outline-none" />
+          <select id="reportDaySelect" class="bg-slate-950 border border-slate-700 rounded-lg px-2 py-1.5 text-[11px] sm:text-xs text-white font-semibold focus:outline-none"></select>
         </div>
       </div>
       <div class="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-800">
@@ -248,6 +252,8 @@
       </div>
       <p id="storeTotalValue" class="text-lg font-extrabold font-mono text-emerald-400"></p>
     </div>
+
+    <div id="orphanWarn" class="hidden bg-amber-950/60 border border-amber-700/70 rounded-2xl px-4 py-3 text-xs text-amber-200 leading-relaxed"></div>
 
     <!-- Top / Bottom Grid -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-5">
@@ -290,19 +296,6 @@
       </div>
     </div>
 
-    <!-- Full Ranking -->
-    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-5 space-y-3">
-      <div class="flex items-center justify-between border-b border-slate-800 pb-2.5 gap-2">
-        <div>
-          <h3 class="font-extrabold text-sm text-white">Full Staff Ranking</h3>
-          <p class="text-[10px] sm:text-[11px] text-slate-400" id="fullRankSubtitle"></p>
-        </div>
-        <select id="fullRankDeptSelect" class="bg-slate-950 border border-slate-700 rounded-lg px-1.5 py-1 text-[11px] text-white font-semibold focus:outline-none"></select>
-      </div>
-      <p class="text-[10px] text-slate-500">Choose a department above. Tap any column heading to sort, or a row for the day-by-day detail.</p>
-      <div id="fullRanking" class="max-h-[520px] overflow-auto space-y-3"></div>
-    </div>
-
     <!-- Dept Rankings + WhatsApp -->
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-5">
       <div class="lg:col-span-6 bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-5 space-y-3">
@@ -336,6 +329,46 @@
           </button>
         </div>
       </div>
+    </div>
+  </section>
+
+  <!-- ========================= TAB: FULL STAFF RANKING ========================= -->
+  <section id="tab-ranking" class="tab-panel space-y-4 sm:space-y-6 hidden">
+
+    <!-- Filters -->
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-3 sm:p-4 space-y-3">
+      <div class="flex flex-wrap items-center justify-between gap-2">
+        <div class="flex flex-wrap items-center gap-1.5 sm:gap-2">
+          <span class="text-xs font-bold text-slate-400">Drive:</span>
+          <select id="rankDriveSelect" class="bg-slate-950 border border-slate-700 rounded-lg px-2 py-1.5 text-[11px] sm:text-xs text-white font-semibold focus:outline-none"></select>
+        </div>
+        <div class="flex flex-wrap items-center gap-1.5 sm:gap-2">
+          <span class="text-xs font-bold text-slate-400">Date:</span>
+          <div id="rankDatePills" class="flex flex-wrap gap-1.5"></div>
+          <input id="rankDateInput" type="date" title="Pick a date from the calendar" class="bg-slate-950 border border-slate-700 rounded-lg px-2 py-1 text-[11px] sm:text-xs text-white font-semibold focus:outline-none" />
+          <select id="rankDaySelect" class="bg-slate-950 border border-slate-700 rounded-lg px-2 py-1.5 text-[11px] sm:text-xs text-white font-semibold focus:outline-none"></select>
+        </div>
+      </div>
+      <div class="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-800">
+        <div class="flex flex-wrap items-center gap-1.5 sm:gap-2">
+          <span class="text-xs font-bold text-slate-400 mr-1">Dept:</span>
+          <select id="fullRankDeptSelect" class="bg-slate-950 border border-slate-700 rounded-lg px-2 py-1.5 text-[11px] sm:text-xs text-white font-semibold focus:outline-none"></select>
+        </div>
+        <div class="flex flex-wrap items-center gap-1.5 sm:gap-2">
+          <span class="text-xs font-bold text-slate-400 mr-1">Type:</span>
+          <select id="rankTypeSelect" class="bg-slate-950 border border-slate-700 rounded-lg px-2 py-1.5 text-[11px] sm:text-xs text-white font-semibold focus:outline-none"></select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Full Ranking -->
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-5 space-y-3">
+      <div class="border-b border-slate-800 pb-2.5">
+        <h3 class="font-extrabold text-sm text-white">Full Staff Ranking</h3>
+        <p class="text-[10px] sm:text-[11px] text-slate-400" id="fullRankSubtitle"></p>
+      </div>
+      <p class="text-[10px] text-slate-500">Tap any column heading to sort, or a row for the day-by-day detail.</p>
+      <div id="fullRanking" class="max-h-[70vh] overflow-auto space-y-3"></div>
     </div>
   </section>
 
@@ -646,6 +679,10 @@
         <p id="staffFormError" class="sm:col-span-2 lg:col-span-4 text-xs text-rose-400 font-semibold hidden"></p>
       </form>
       <div id="staffList" class="space-y-2 max-h-80 overflow-y-auto pr-1"></div>
+      <div id="leftStaffWrap" class="hidden pt-3 mt-1 border-t border-slate-800 space-y-2">
+        <p class="text-xs font-extrabold text-slate-400">Removed staff (<span id="leftStaffCount">0</span>) <span class="font-normal text-slate-500">– history kept</span></p>
+        <div id="leftStaffList" class="space-y-2"></div>
+      </div>
     </div>
 
     <!-- Audit Logs -->
@@ -653,6 +690,61 @@
       <h2 class="font-extrabold text-base text-white">Real-Time Audit Logs (<span id="logCount">0</span>)</h2>
       <div id="auditLogs" class="space-y-2 max-h-72 overflow-y-auto pr-1 text-xs"></div>
     </div>
+  </section>
+  <!-- ========================= TAB: SALES DASHBOARD (system / POS sales only) ========================= -->
+  <section id="tab-sales" class="tab-panel space-y-4 hidden">
+    <div class="flex flex-wrap items-center justify-between gap-2 bg-slate-900 border border-slate-800 rounded-2xl p-3">
+      <div class="flex items-center gap-2">
+        <span class="text-xs font-bold text-slate-400">Drive:</span>
+        <select id="salesDriveSelect" class="bg-slate-950 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-white font-semibold focus:outline-none"></select>
+      </div>
+      <button id="salesManageBtn" type="button" class="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 px-3 py-1.5 rounded-xl text-xs font-bold transition">🔒 Upload / Edit sales data</button>
+    </div>
+
+    <!-- Manager-only upload panel -->
+    <div id="salesManage" class="hidden bg-slate-900 border border-emerald-700/50 rounded-2xl p-4 space-y-4">
+      <div class="space-y-2">
+        <h3 class="font-extrabold text-sm text-white">1. Event targets (for this dashboard)</h3>
+        <div class="grid grid-cols-2 gap-2">
+          <label class="block space-y-1"><span class="text-[11px] font-semibold text-slate-400">Event target (₹)</span>
+            <input id="cfgTarget" type="number" step="any" min="0" placeholder="e.g. 2350000" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-emerald-500" /></label>
+          <label class="block space-y-1"><span class="text-[11px] font-semibold text-slate-400">Units target / day</span>
+            <input id="cfgUnits" type="number" step="any" min="0" placeholder="e.g. 314" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-emerald-500" /></label>
+          <label class="block space-y-1"><span class="text-[11px] font-semibold text-slate-400">Event start date</span>
+            <input id="cfgStart" type="date" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-emerald-500" /></label>
+          <label class="block space-y-1"><span class="text-[11px] font-semibold text-slate-400">Event end date</span>
+            <input id="cfgEnd" type="date" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-emerald-500" /></label>
+        </div>
+        <p class="text-[10px] text-slate-500">Per-day value target = Event target ÷ total event days (start to end). Sales are counted from the first uploaded day.</p>
+        <button id="saveCfgBtn" type="button" class="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 py-2.5 rounded-xl text-xs font-extrabold transition">Save targets</button>
+      </div>
+
+      <div class="space-y-2 border-t border-slate-800 pt-3">
+        <h3 class="font-extrabold text-sm text-white">2. Add / edit one day</h3>
+        <div class="grid grid-cols-3 gap-2">
+          <input id="saleDate" type="date" class="bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-emerald-500" />
+          <input id="saleQty" type="number" step="any" min="0" inputmode="decimal" placeholder="Quantity" class="bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-emerald-500" />
+          <input id="saleValue" type="number" step="any" min="0" inputmode="decimal" placeholder="Sales value ₹" class="bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-emerald-500" />
+        </div>
+        <p class="text-[10px] text-slate-500">Saving a date that already exists replaces that day. You can also tap any row in the table below to edit it.</p>
+        <button id="saveSaleBtn" type="button" class="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 py-2.5 rounded-xl text-xs font-extrabold transition">Save day</button>
+      </div>
+
+      <div class="space-y-2 border-t border-slate-800 pt-3">
+        <h3 class="font-extrabold text-sm text-white">3. Upload many days at once</h3>
+        <p class="text-[10px] text-slate-400 leading-relaxed">Paste from Excel / the system report, or choose a CSV file. One day per line: <strong>date, quantity, sales value</strong><br>Example: <span class="font-mono text-emerald-300">04/11/2026 &nbsp;32 &nbsp;3576.25</span></p>
+        <textarea id="saleBulk" rows="5" placeholder="04/11/2026&#9;32&#9;3576.25&#10;05/11/2026&#9;45&#9;5464.88" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-xs font-mono text-white focus:outline-none focus:border-emerald-500"></textarea>
+        <div class="flex gap-2">
+          <label class="flex-1 text-center cursor-pointer bg-slate-800 hover:bg-slate-700 text-white border border-slate-700 py-2.5 rounded-xl text-xs font-bold transition">
+            📄 Choose CSV file<input id="saleFile" type="file" accept=".csv,.txt,text/csv,text/plain" class="hidden" />
+          </label>
+          <button id="saveBulkBtn" type="button" class="flex-1 bg-emerald-500 hover:bg-emerald-400 text-slate-950 py-2.5 rounded-xl text-xs font-extrabold transition">Save all days</button>
+        </div>
+      </div>
+      <p id="saleMsg" class="hidden text-xs font-semibold whitespace-pre-line"></p>
+    </div>
+
+    <div id="salesDash"></div>
   </section>
 </main>
 
@@ -687,12 +779,16 @@
 <div id="editStaffModal" class="hidden fixed inset-0 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4 z-50">
   <form id="editStaffForm" class="bg-slate-900 border border-emerald-500/60 rounded-2xl p-5 max-w-sm w-full space-y-3 shadow-2xl">
     <h3 class="font-extrabold text-white text-base">Edit Staff Details</h3>
+    <p class="text-[10px] text-slate-500 leading-relaxed">Code <strong id="editStaffCode" class="text-slate-300"></strong> • Facility ID <strong id="editStaffFid" class="text-slate-300"></strong> — these never change, even if the name or section does.</p>
     <label class="block space-y-1"><span class="text-[11px] font-semibold text-slate-400">Staff Name *</span>
       <input name="name" type="text" autocomplete="off" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-emerald-500" /></label>
     <label class="block space-y-1"><span class="text-[11px] font-semibold text-slate-400">Mobile Number (optional)</span>
       <input name="mobile" type="tel" inputmode="numeric" maxlength="14" autocomplete="off" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-emerald-500" /></label>
     <label class="block space-y-1"><span class="text-[11px] font-semibold text-slate-400">Section *</span>
       <select name="dept" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-emerald-500"></select></label>
+    <label id="effFromWrap" class="hidden block space-y-1"><span class="text-[11px] font-semibold text-amber-300">Moves to the new section from (date)</span>
+      <input name="effFrom" type="date" class="w-full bg-slate-950 border border-amber-700/70 rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-amber-400" />
+      <span class="block text-[10px] text-slate-500">Earlier counts stay in the old section. Counts from this date count for the new one.</span></label>
     <label class="block space-y-1"><span class="text-[11px] font-semibold text-slate-400">Type</span>
       <select name="type" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-emerald-500"></select></label>
     <p id="editStaffError" class="text-xs text-rose-400 font-semibold hidden"></p>
@@ -701,6 +797,21 @@
       <button type="submit" class="flex-1 bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs py-2.5 rounded-xl font-extrabold transition">Save Changes</button>
     </div>
   </form>
+</div>
+
+<!-- Link unknown codes modal -->
+<div id="linkModal" class="hidden fixed inset-0 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+  <div class="bg-slate-900 border border-amber-600/60 rounded-2xl p-5 max-w-lg w-full max-h-[90vh] overflow-y-auto space-y-3 shadow-2xl">
+    <div>
+      <h3 class="font-extrabold text-white text-base">Link unknown codes</h3>
+      <p class="text-[11px] text-slate-400 mt-1 leading-relaxed">These counts were saved under a code that is no longer in the Staff list. Choose who each code belongs to. The code is remembered for that person, so their old counts join their ranking. Nothing in the entries sheet is changed.</p>
+    </div>
+    <div id="linkRows" class="space-y-3"></div>
+    <div class="flex gap-2.5 pt-1">
+      <button id="linkCancel" type="button" class="flex-1 bg-slate-800 hover:bg-slate-700 text-white text-xs py-2.5 rounded-xl font-bold transition">Cancel</button>
+      <button id="linkSave" type="button" class="flex-1 bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs py-2.5 rounded-xl font-extrabold transition">Save links</button>
+    </div>
+  </div>
 </div>
 
 <!-- Edit drive modal -->
@@ -813,7 +924,7 @@
 /* ======================================================================
    GOOGLE SHEET CONFIG
    ====================================================================== */
-const API_URL = "https://script.google.com/macros/s/AKfycbym-TfooC8vqe0JVN5yCKI0HbkcrdL-NIegILWYcA_wRYTsuNQB58ueQa0cvSWp57Gk/exec";   // leave "" to run in demo mode
+const API_URL = "https://script.google.com/macros/s/AKfycbwCI2WvPycEKG0ptcfPwmPSYVqtenhhAWvEVrAZFbEnrPCFL0xO33VDv_aKDIqJXi63/exec";   // leave "" to run in demo mode
 const API_TOKEN = "change-me-123";               // same as TOKEN in Code.gs
 const LIVE = API_URL.startsWith("https://");
 
@@ -860,9 +971,10 @@ function storeTargetOver(drive, dates) {                                  // ove
 function staffTargetOn(st, drive, date) {                                 // one associate, one day
   const rule = targetRule(drive, date);
   if (!rule) return staffDayTarget(st, drive);
-  if (!driveDepts(drive).includes(st.dept)) return 0;
-  const secT = ruleSectionTargets(rule, drive)[st.dept] || 0;
-  const wDept = state.staffList.filter(s => s.dept === st.dept).reduce((n, s) => n + staffWeight(s), 0);
+  const dep = deptOn(st, date);
+  if (!driveDepts(drive).includes(dep)) return 0;
+  const secT = ruleSectionTargets(rule, drive)[dep] || 0;
+  const wDept = state.staffList.filter(s => deptOn(s, date) === dep).reduce((n, s) => n + staffWeight(s), 0);
   return wDept ? secT * staffWeight(st) / wDept : 0;
 }
 const staffTargetOver = (st, drive, dates) => round1(dates.reduce((n, dt) => n + staffTargetOn(st, drive, dt), 0));
@@ -937,6 +1049,7 @@ const state = {
   lowestDept: "All",
   rankSort: { key: "achieved", dir: "desc" },
   rankDept: "All",
+  staffLeft: [],
 
   // Confirm modal pending
   pendingConfirm: null,
@@ -950,7 +1063,14 @@ const state = {
 
 state.topSortMode = "achieved";
 state.reportType = "All";
-if (LIVE) { state.staffList = []; state.drives = []; state.entries = []; state.reportDriveId = null; }
+state.openDays = new Set();            // drives whose day-wise list the associate has opened (collapsed by default)
+document.addEventListener("click", e => {
+  const b = e.target.closest("[data-daytoggle]"); if (!b) return;
+  const id = Number(b.dataset.daytoggle);
+  if (state.openDays.has(id)) state.openDays.delete(id); else state.openDays.add(id);
+  renderMyStats(); renderLoginPreview();
+});
+if (LIVE) { state.staffList = []; state.staffLeft = []; state.drives = []; state.entries = []; state.reportDriveId = null; }
 
 /* ======================================================================
    HELPERS
@@ -999,7 +1119,7 @@ function escapeHtml(s) {
    GOOGLE SHEET SYNC
    ====================================================================== */
 let pending = 0, writeSeq = 0, queue = Promise.resolve();
-const QUEUEABLE = new Set(["addEntry", "deleteEntry", "saveStaff", "deleteStaff", "updateDrive", "deleteDrive"]);
+const QUEUEABLE = new Set(["addEntry", "deleteEntry", "saveStaff", "deleteStaff", "updateDrive", "deleteDrive", "saveSales", "deleteSale", "saveSalesConfig"]);
 const OUTBOX_KEY = "smartdrive_outbox_v1", SESSION_KEY = "smartdrive_session_v1";
 function readOutbox() { try { return JSON.parse(localStorage.getItem(OUTBOX_KEY) || "[]"); } catch (_) { return []; } }
 function writeOutbox(a) { try { localStorage.setItem(OUTBOX_KEY, JSON.stringify(a)); } catch (_) {} }
@@ -1035,7 +1155,8 @@ function checkSessionExpiry() {                        // automatic logout at 11
 }
 function revalidateSession() {
   if (!LIVE || !state.currentStaff) return;
-  const fresh = state.staffList.find(s => s.id === state.currentStaff.id);
+  const cur = state.currentStaff, up = String(cur.id).toUpperCase();
+  const fresh = state.staffList.find(s => s.id === cur.id) || state.staffList.find(s => String(s.code).toUpperCase() === up || (s.oldCodes || []).includes(up));
   if (fresh) { state.currentStaff = fresh; saveSession(); }
   else if (state.staffList.length) { state.currentStaff = null; saveSession(); }   // staff was deleted
 }
@@ -1080,11 +1201,61 @@ function api(action, payload = {}) {
   queue = queue.then(run, run);          // writes run in order (add → undo safe)
   return queue;
 }
+/* ---------- permanent IDs ----------
+   staff.id   = Facility ID (FID-XXXXXXXX): created once, never edited, never reused. Entries are linked to this.
+   staff.code = the employee code shown to people (EMP019). It is only a label.
+   staff.oldCodes = earlier codes that still belong to this person (links old entries).            */
+function parseHistory(str) {
+  return String(str || "").split(";").map(x => x.trim()).filter(Boolean).map(x => { const [from, dept] = x.split("|"); return { from: from.trim(), dept: (dept || "").trim() }; }).filter(x => x.from && x.dept);
+}
+function serializeHistory(arr) { return (arr || []).map(x => `${x.from}|${x.dept}`).join(";"); }
+function parseStaff(s) {
+  return { ...s, code: s.code || s.id, oldCodes: Array.isArray(s.oldCodes) ? s.oldCodes : [], deptHistory: Array.isArray(s.deptHistory) ? s.deptHistory : parseHistory(s.deptHistory), active: s.active !== false };
+}
+function staffPayload(s) {
+  return { id: s.id, code: s.code || s.id, name: s.name, dept: s.dept, type: s.type, mobile: s.mobile || "", oldCodes: (s.oldCodes || []).join(","), deptHistory: serializeHistory(s.deptHistory), active: s.active !== false };
+}
+const allStaff = () => [...state.staffList, ...state.staffLeft];
+const codeOf = id => { const s = allStaff().find(x => x.id === id); return s ? (s.code || s.id) : id; };
+function newFacilityId() {
+  const used = new Set(allStaff().map(s => s.id));
+  let id;
+  do {
+    const r = (window.crypto && crypto.getRandomValues) ? Array.from(crypto.getRandomValues(new Uint8Array(4))).map(b => b.toString(16).padStart(2, "0")).join("") : Math.random().toString(16).slice(2, 10).padEnd(8, "0");
+    id = "FID-" + r.toUpperCase();
+  } while (used.has(id));
+  return id;
+}
+function deptOn(st, date) {                           // the section this person belonged to on a given date
+  const h = (st.deptHistory || []).slice().sort((a, b) => a.from.localeCompare(b.from));
+  if (!h.length) return st.dept;
+  if (h[h.length - 1].dept !== st.dept) h[h.length - 1] = { ...h[h.length - 1], dept: st.dept };   // sheet edited by hand: current section wins
+  let d = h[0].dept;
+  h.forEach(x => { if (x.from <= date) d = x.dept; });
+  return d;
+}
+function normalizeEntries() {                         // entries -> person (by Facility ID, current code or an old code); name + section from the staff record
+  const m = new Map();
+  allStaff().forEach(s => { m.set(String(s.id).toUpperCase(), s); if (!m.has(String(s.code || "").toUpperCase())) m.set(String(s.code || "").toUpperCase(), s); });
+  allStaff().forEach(s => (s.oldCodes || []).forEach(c => m.set(String(c).toUpperCase(), s)));      // explicit links win
+  state.entries.forEach(e => {
+    const s = m.get(String(e.staffId).trim().toUpperCase());
+    if (!s) return;
+    const dep = deptOn(s, e.date);
+    e.staffId = s.id; e.staffName = s.name; e.staffDept = dep; e.targetDept = dep;
+  });
+}
 async function loadFromSheet() {
   const s = writeSeq;
   const j = await api("getAll");
   if (!j.ok || j.local || s !== writeSeq || pending > 0) return false;   // skip if a write happened meanwhile
-  state.staffList = j.staff; state.drives = j.drives; state.entries = j.entries;
+  const staffAll = j.staff.map(parseStaff);
+  state.staffList = staffAll.filter(s => s.active); state.staffLeft = staffAll.filter(s => !s.active);
+  state.drives = j.drives; state.entries = j.entries;
+  state.sales = Array.isArray(j.sales) ? j.sales : [];
+  state.salesConfig = {}; (Array.isArray(j.salesConfig) ? j.salesConfig : []).forEach(c => { state.salesConfig[c.driveId] = c; });
+  if (state.activeTab === "sales") renderSales();
+  normalizeEntries();
   revalidateSession();
   if (!state.drives.some(d => d.id === state.reportDriveId)) state.reportDriveId = state.drives[0]?.id ?? null;
   if (state.selectedDashDriveId !== "all" && !state.drives.some(d => d.id === state.selectedDashDriveId)) {
@@ -1098,7 +1269,7 @@ function refreshAll() {
   if (loggedIn !== !!state.currentStaff) renderSession();
   else if (!state.currentStaff) { renderLoginSelect(); renderLoginPreview(); }
   else renderMyStats();
-  if (state.activeTab === "reports") renderReports();
+  if (state.activeTab === "reports" || state.activeTab === "ranking") renderReports();
   if (state.activeTab === "manager") renderManager();
 }
 function sheetNameFor(name, startDate) { return `${startDate.slice(0, 7)} ${name}`; }
@@ -1174,7 +1345,7 @@ function triggerToast(staffName, valueNum, unit, driveName) {
 document.querySelectorAll(".tab-btn").forEach(btn => {
   btn.addEventListener("click", () => {
     const tab = btn.dataset.tab;
-    if (tab === "manager" && !managerUnlocked) { openLock(); return; }
+    if (tab === "manager" && !managerUnlocked) { state.afterUnlock = "manager"; openLock(); return; }
     state.activeTab = tab;
     document.querySelectorAll(".tab-btn").forEach(b => {
       b.classList.remove("bg-emerald-500", "text-slate-950", "shadow-sm");
@@ -1184,13 +1355,13 @@ document.querySelectorAll(".tab-btn").forEach(btn => {
     btn.classList.remove("text-slate-400", "hover:text-white");
     document.querySelectorAll(".tab-panel").forEach(p => p.classList.add("hidden"));
     document.getElementById(`tab-${tab}`).classList.remove("hidden");
-    if (tab === "reports") {
-      state.reportDate = TODAY_DATE;                       // Reports always opens on today
-      state.burstKey++;
+    if (tab === "reports" || tab === "ranking") {
+      state.reportDate = TODAY_DATE;                       // Leaderboard / Ranking always open on today
       renderReports();
-      fireParty();
+      if (tab === "reports") { state.burstKey++; fireParty(); }
     }
     if (tab === "manager") renderManager();
+    if (tab === "sales") { renderSales(); fillSalesForms(); }
     window.scrollTo({ top: 0, behavior: "smooth" });
   });
 });
@@ -1284,20 +1455,47 @@ function renderQuickAdd() {
   });
 }
 
-/* ---------- "how many have I done": today + previous days, per active drive ---------- */
+/* ---------- "how many have I done": today + previous days + FULL day-wise list, per active drive ---------- */
 const nowDate = () => LIVE ? localToday() : TODAY_DATE;
 const fmtVal = (unit, n) => unit === "₹" ? "₹" + Math.round(n).toLocaleString() : String(round1(n));
+const weekdayShort = iso => { try { return new Date(iso + "T00:00:00").toLocaleDateString("en-IN", { weekday: "short" }); } catch (_) { return ""; } };
 function staffStatsRows(staffId) {
   const st = state.staffList.find(s => s.id === staffId), today = nowDate();
   return state.drives.filter(d => d.active).map(d => {
     const mine = state.entries.filter(e => e.driveId === d.id && e.staffId === staffId);
     const t = mine.filter(e => e.date === today).reduce((n, e) => n + e.value, 0);
     const prev = mine.filter(e => e.date < today).reduce((n, e) => n + e.value, 0);
-    return { drive: d, today: t, prev, total: t + prev, tgt: st ? round1(staffTargetOn(st, d, today)) : 0 };
+    // complete list of days (campaign start -> today, plus any other day with an entry), newest first
+    const dates = driveDates(d).slice().reverse();
+    const days = dates.map(dt => ({
+      date: dt,
+      value: mine.filter(e => e.date === dt).reduce((n, e) => n + e.value, 0),
+      entries: mine.filter(e => e.date === dt).length,
+      tgt: st ? round1(staffTargetOn(st, d, dt)) : 0
+    }));
+    return { drive: d, today: t, prev, total: t + prev, tgt: st ? round1(staffTargetOn(st, d, today)) : 0, days };
   });
 }
+function dayListHTML(r, today) {
+  const u = r.drive.unit;
+  if (!r.days.length) return "";
+  const open = state.openDays.has(r.drive.id);
+  return `<div class="mt-3 pt-2 border-t border-slate-800">
+    <button type="button" data-daytoggle="${r.drive.id}" class="w-full flex items-center justify-between gap-2 px-2.5 py-2 rounded-lg bg-slate-900 border border-slate-800 hover:border-emerald-600/60 text-xs font-semibold text-slate-300 mb-1.5">
+      <span>Day-wise count (${r.days.length} day${r.days.length === 1 ? "" : "s"})</span>
+      <span class="text-emerald-400">${open ? "Hide ▲" : "Show ▼"}</span>
+    </button>
+    <div class="${open ? "" : "hidden "}max-h-56 overflow-y-auto space-y-1 pr-1 text-left">${r.days.map(x => {
+      const zero = x.value === 0, isToday = x.date === today;
+      const val = x.tgt > 0 ? fmtVal(u, x.value) + "/" + fmtVal(u, x.tgt) : fmtVal(u, x.value);
+      return `<div class="flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-lg border text-xs ${zero ? "bg-rose-950/25 border-rose-900/60" : isToday ? "bg-emerald-950/40 border-emerald-700/60" : "bg-slate-900 border-slate-800"}">
+        <span class="text-slate-200 font-semibold whitespace-nowrap">${formatDisplayDate(x.date)} <span class="text-slate-500 font-normal">${weekdayShort(x.date)}</span>${isToday ? ' <span class="text-[10px] text-emerald-300 font-bold">TODAY</span>' : ""}${zero ? ' <span class="text-[10px] text-rose-400 font-bold">ZERO</span>' : ""}</span>
+        <span class="font-mono font-extrabold whitespace-nowrap ${zero ? "text-rose-400" : "text-emerald-400"}">${val}${x.entries > 1 ? ` <span class="text-slate-500 font-normal text-[10px]">(${x.entries})</span>` : ""}</span>
+      </div>`;
+    }).join("")}</div></div>`;
+}
 function statsCardsHTML(staffId) {
-  const rows = staffStatsRows(staffId);
+  const rows = staffStatsRows(staffId), today = nowDate();
   if (!rows.length) return `<p class="text-xs text-slate-500 text-center py-2">No active drive right now.</p>`;
   return rows.map(r => {
     const u = r.drive.unit;
@@ -1307,7 +1505,7 @@ function statsCardsHTML(staffId) {
         <div><p class="text-[11px] text-slate-400">Today</p><p class="text-lg font-extrabold font-mono text-emerald-400">${r.tgt > 0 ? fmtVal(u, r.today) + "/" + fmtVal(u, r.tgt) : fmtVal(u, r.today)}</p></div>
         <div><p class="text-[11px] text-slate-400">Previous days</p><p class="text-lg font-extrabold font-mono text-slate-200">${fmtVal(u, r.prev)}</p></div>
         <div><p class="text-[11px] text-slate-400">Total</p><p class="text-lg font-extrabold font-mono text-amber-300">${fmtVal(u, r.total)}</p></div>
-      </div></div>`;
+      </div>${dayListHTML(r, today)}</div>`;
   }).join("");
 }
 function renderMyStats() {
@@ -1492,28 +1690,45 @@ document.getElementById("confirmOk").addEventListener("click", () => {
 });
 
 /* ======================================================================
-   REPORTS
+   REPORTS  (Leaderboard + Full Staff Ranking tabs share the same filters/state)
    ====================================================================== */
 function renderReportPills() {
-  const driveSel = document.getElementById("reportDriveSelect");
-  driveSel.innerHTML = state.drives.map(d => `<option value="${d.id}">${escapeHtml(d.name)}</option>`).join("");
-  if (state.drives.length) driveSel.value = String(state.drives.some(d => d.id === state.reportDriveId) ? state.reportDriveId : state.drives[0].id);
-  driveSel.onchange = () => { state.reportDriveId = Number(driveSel.value); renderReports(); };
+  const driveHTML = state.drives.map(d => `<option value="${d.id}">${escapeHtml(d.name)}</option>`).join("");
+  ["reportDriveSelect", "rankDriveSelect"].forEach(id => {
+    const sel = document.getElementById(id);
+    sel.innerHTML = driveHTML;
+    if (state.drives.length) sel.value = String(state.drives.some(d => d.id === state.reportDriveId) ? state.reportDriveId : state.drives[0].id);
+    sel.onchange = () => { state.reportDriveId = Number(sel.value); renderReports(); };
+  });
 
-  const datePills = document.getElementById("reportDatePills");
   const dateOpts = [
     { id: YESTERDAY_DATE, label: formatShortDate(YESTERDAY_DATE) },
     { id: TODAY_DATE, label: formatShortDate(TODAY_DATE) },
     { id: "span", label: "Span" }
   ];
-  datePills.innerHTML = dateOpts.map(o => `
-    <button data-id="${o.id}" class="report-date-pill px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg sm:rounded-xl text-[11px] sm:text-xs font-bold transition ${state.reportDate === o.id ? "bg-amber-500 text-slate-950" : "bg-slate-800 text-slate-300 hover:bg-slate-700"}">${o.label}</button>
-  `).join("");
-  datePills.querySelectorAll(".report-date-pill").forEach(b => {
-    b.addEventListener("click", () => { state.reportDate = b.dataset.id; renderReports(); });
+  ["reportDatePills", "rankDatePills"].forEach(id => {
+    const datePills = document.getElementById(id);
+    datePills.innerHTML = dateOpts.map(o => `
+      <button data-id="${o.id}" class="report-date-pill px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg sm:rounded-xl text-[11px] sm:text-xs font-bold transition ${state.reportDate === o.id ? "bg-amber-500 text-slate-950" : "bg-slate-800 text-slate-300 hover:bg-slate-700"}">${o.label}</button>
+    `).join("");
+    datePills.querySelectorAll(".report-date-pill").forEach(b => {
+      b.addEventListener("click", () => { state.reportDate = b.dataset.id; renderReports(); });
+    });
   });
 
   const curDrive = state.drives.find(d => d.id === state.reportDriveId) || state.drives[0];
+  // calendar + individual-day list (Leaderboard and Full Staff Ranking)
+  const dayList = curDrive ? driveDates(curDrive).slice().reverse() : [];
+  [["reportDateInput", "reportDaySelect"], ["rankDateInput", "rankDaySelect"]].forEach(([inId, selId]) => {
+    const inp = document.getElementById(inId), sel = document.getElementById(selId);
+    inp.value = state.reportDate !== "span" ? state.reportDate : "";
+    inp.max = TODAY_DATE; if (curDrive && curDrive.startDate) inp.min = curDrive.startDate;
+    inp.onchange = () => { if (inp.value) { state.reportDate = inp.value; renderReports(); } };
+    sel.innerHTML = `<option value="">Pick a day…</option><option value="span">Entire span</option>` +
+      dayList.map(dt => `<option value="${dt}">${formatDisplayDate(dt)} ${weekdayShort(dt)}</option>`).join("");
+    sel.value = state.reportDate;
+    sel.onchange = () => { if (sel.value) { state.reportDate = sel.value; renderReports(); } };
+  });
   const dl = curDrive ? driveDepts(curDrive) : DEPARTMENTS;
   if (state.reportDept !== "All" && !dl.includes(state.reportDept)) state.reportDept = "All";
   const deptSel = document.getElementById("reportDeptSelect");
@@ -1524,9 +1739,13 @@ function renderReportPills() {
     if (deptSel.value !== "All") state.trackerDeptOverride = deptSel.value;
     renderReports();
   };
-  const typeSel = document.getElementById("reportTypeSelect");
-  typeSel.innerHTML = [["All", "All types"], ...TYPES].map(([v, l]) => `<option value="${v}"${state.reportType === v ? " selected" : ""}>${l}</option>`).join("");
-  typeSel.onchange = () => { state.reportType = typeSel.value; renderReports(); };
+  const typeHTML = [["All", "All types"], ...TYPES].map(([v, l]) => `<option value="${v}"${state.reportType === v ? " selected" : ""}>${l}</option>`).join("");
+  ["reportTypeSelect", "rankTypeSelect"].forEach(id => {
+    const typeSel = document.getElementById(id);
+    typeSel.innerHTML = typeHTML;
+    typeSel.value = state.reportType;
+    typeSel.onchange = () => { state.reportType = typeSel.value; renderReports(); };
+  });
 }
 
 function computeReportsData() {
@@ -1611,9 +1830,16 @@ function computeReportsData() {
     whatsappText = [`${drive.name} Tracker ${activeTrackerDept}`, ``, `${trackerDateLabel}`, ``, ...lines, ``, `Total = ${totTxt(total, tgt)}`].join("\n");
   }
 
+  const knownIds = new Set(allStaff().map(s => s.id)), orphanMap = {};
+  driveEntries.filter(e => !knownIds.has(e.staffId)).forEach(e => {
+    const o = orphanMap[e.staffId] || (orphanMap[e.staffId] = { id: e.staffId, name: e.staffName, entries: 0, total: 0, depts: {} });
+    o.entries++; o.total += e.value;
+    const dn = e.targetDept || e.staffDept; if (dn) o.depts[dn] = (o.depts[dn] || 0) + 1;
+  });
+  const orphans = Object.values(orphanMap);
   const storeTotal = driveEntries.reduce((s, e) => s + e.value, 0);
   const storeTarget = storeTargetOver(drive, tDates);
-  return { drive, sorted, top5, lowest5, deptRankings, whatsappText, activeTrackerDept, lowDept, zeroPerformers, rankDept, driveEntries, tDates, dl, storeTotal, storeTarget };
+  return { drive, sorted, top5, lowest5, deptRankings, whatsappText, activeTrackerDept, lowDept, zeroPerformers, rankDept, driveEntries, tDates, dl, storeTotal, storeTarget, orphans };
 }
 
 function renderReports() {
@@ -1629,6 +1855,14 @@ function renderReports() {
   const drive = data.drive;
   const unit = drive.unit;
   document.getElementById("storeTotalValue").textContent = qtU(unit, data.storeTotal, data.storeTarget) + (data.storeTarget > 0 ? ` (${Math.round(data.storeTotal / data.storeTarget * 100)}%)` : "");
+  const ow = document.getElementById("orphanWarn");
+  ow.classList.toggle("hidden", !data.orphans.length);
+  ow.innerHTML = data.orphans.length
+    ? `⚠ <strong>${data.orphans.reduce((n, o) => n + o.entries, 0)} entr${data.orphans.reduce((n, o) => n + o.entries, 0) === 1 ? "y has" : "ies have"} a code that is not in the Staff list</strong>, so they are not in the staff ranking: `
+      + data.orphans.map(o => `<strong>${escapeHtml(o.id)}</strong> (${escapeHtml(o.name || "no name")} – ${o.entries} entr${o.entries === 1 ? "y" : "ies"}, ${formatValue(unit, o.total)})`).join("; ")
+      + `. <button id="orphanFixBtn" type="button" class="ml-1 px-2.5 py-1 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold">Fix now</button>`
+    : "";
+  const ofb = document.getElementById("orphanFixBtn"); if (ofb) ofb.onclick = () => openLinkModal(data.orphans);
   document.getElementById("storeTotalLabel").textContent = `${drive.name} • ${state.reportDate === "span" ? "Entire span" : formatDisplayDate(state.reportDate)}`;
   document.getElementById("topSubtitle").textContent =
     `${drive.name} • ${state.reportDept === "All" ? "All Depts" : state.reportDept}`;
@@ -1708,12 +1942,12 @@ function renderReports() {
           <td class="px-2 py-2 text-right font-mono font-extrabold text-rose-400">${qt(0, st.target)}</td></tr>`).join("")}</tbody></table>`
     : `<p class="text-xs text-emerald-400 text-center py-3">No zero performers 🎉</p>`;
 
-  // Full ranking
+  // Full ranking (lives in the "Full Staff Ranking" tab)
   const fullRank = document.getElementById("fullRanking");
   const rankSel = document.getElementById("fullRankDeptSelect");
   rankSel.innerHTML = ["All", ...driveDepts(drive)].map(d => `<option value="${escapeHtml(d)}"${d === data.rankDept ? " selected" : ""}>${d === "All" ? "All depts" : escapeHtml(d)}</option>`).join("");
   document.getElementById("fullRankSubtitle").textContent =
-    `${data.sorted.length} staff • ${data.rankDept === "All" ? "All depts" : data.rankDept} • ${state.reportDate === "span" ? "Entire Span" : formatDisplayDate(state.reportDate)}`;
+    `${drive.name} • ${data.sorted.length} staff • ${data.rankDept === "All" ? "All depts" : data.rankDept} • ${state.reportDate === "span" ? "Entire Span" : formatDisplayDate(state.reportDate)}`;
   const rankMap = new Map([...data.sorted].sort((x, y) => y.achieved - x.achieved || x.name.localeCompare(y.name)).map((s, i) => [s.id, i + 1]));
   const rankRows = data.sorted.map(s => ({ ...s, rank: rankMap.get(s.id) }));
   if (!rankRows.length) {
@@ -1789,6 +2023,50 @@ document.getElementById("editDriveForm").addEventListener("submit", e => {
   api("updateDrive", { id: d.id, name, target, startDate, endDate });
   document.getElementById("editDriveModal").classList.add("hidden");
   renderDrivesList(); renderDashboard(); renderEntryDriveSelect(); refreshMgrEntry(); renderReports();
+});
+
+/* ---------- link unknown codes to people ---------- */
+const nameKey = n => String(n || "").toLowerCase().replace(/[^a-z]/g, "");
+function guessStaff(orphanName) {
+  const k = nameKey(orphanName); if (!k) return null;
+  const all = allStaff();
+  return all.find(s => nameKey(s.name) === k)
+      || all.find(s => k.length >= 4 && (nameKey(s.name).startsWith(k) || k.startsWith(nameKey(s.name))) && nameKey(s.name).length >= 4) || null;
+}
+function openLinkModal(orphans) {
+  const opts = allStaff().slice().sort((a, b) => a.name.localeCompare(b.name)).map(s => `<option value="${escapeHtml(s.id)}">${escapeHtml(s.name)} • ${escapeHtml(s.dept)} • ${escapeHtml(s.code)}${s.active ? "" : " (removed)"}</option>`).join("");
+  document.getElementById("linkRows").innerHTML = orphans.map(o => {
+    const g = guessStaff(o.name);
+    return `<div class="rounded-xl border border-slate-800 bg-slate-950/60 p-3 space-y-1.5">
+      <p class="text-xs text-white"><strong>${escapeHtml(o.id)}</strong> <span class="text-slate-400">– saved as “${escapeHtml(o.name || "no name")}” • ${o.entries} entr${o.entries === 1 ? "y" : "ies"}</span></p>
+      <select data-link-code="${escapeHtml(o.id)}" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2 text-xs text-white focus:outline-none">
+        <option value="">— skip for now —</option>
+        <option value="__new__"${g ? "" : " selected"}>➕ Add “${escapeHtml(o.name || o.id)}” as a new employee</option>
+        ${opts.replace(g ? `value="${escapeHtml(g.id)}"` : "@@none@@", g ? `value="${escapeHtml(g.id)}" selected` : "")}
+      </select></div>`;
+  }).join("");
+  document.getElementById("linkModal").dataset.orphans = JSON.stringify(orphans);
+  document.getElementById("linkModal").classList.remove("hidden");
+}
+document.getElementById("linkCancel").addEventListener("click", () => document.getElementById("linkModal").classList.add("hidden"));
+document.getElementById("linkSave").addEventListener("click", () => {
+  const orphans = JSON.parse(document.getElementById("linkModal").dataset.orphans || "[]");
+  document.querySelectorAll("#linkRows select").forEach(sel => {
+    const code = sel.dataset.linkCode, o = orphans.find(x => x.id === code); if (!o || !sel.value) return;
+    if (sel.value === "__new__") {
+      const topDept = Object.entries(o.depts || {}).sort((a, b) => b[1] - a[1])[0];
+      const dep = topDept ? (DEPARTMENTS.find(d => d.toLowerCase().replace(/s$/, "") === topDept[0].toLowerCase().replace(/s$/, "")) || topDept[0]) : "Unassigned";
+      const s = { id: newFacilityId(), code, name: (o.name || code).trim(), dept: dep, type: "Regular", mobile: "", oldCodes: [code.toUpperCase()], deptHistory: [], active: true };
+      state.staffList.push(s);
+      api("saveStaff", { staff: staffPayload(s) });
+    } else {
+      const s = allStaff().find(x => x.id === sel.value); if (!s) return;
+      s.oldCodes = [...new Set([...(s.oldCodes || []), code.toUpperCase()])];
+      api("saveStaff", { staff: staffPayload(s) });
+    }
+  });
+  document.getElementById("linkModal").classList.add("hidden");
+  normalizeEntries(); afterStaffChange();
 });
 
 /* ---------- sortable ranking table ---------- */
@@ -2496,14 +2774,34 @@ function renderStaffList() {
   `).join("");
   wrap.querySelectorAll("[data-del-staff]").forEach(b => {
     b.addEventListener("click", () => {
-      api("deleteStaff", { id: b.dataset.delStaff });
-      state.staffList = state.staffList.filter(s => s.id !== b.dataset.delStaff);
+      const s = state.staffList.find(x => x.id === b.dataset.delStaff); if (!s) return;
+      if (!confirm(`Remove ${s.name} from the active staff list?\n\nTheir past counts stay in the reports. You can restore them later.`)) return;
+      const left = { ...s, active: false };
+      state.staffList = state.staffList.filter(x => x.id !== s.id); state.staffLeft.push(left);
+      api("saveStaff", { staff: staffPayload(left) });
+      if (state.currentStaff && state.currentStaff.id === s.id) { state.currentStaff = null; saveSession(); renderSession(); }
       afterStaffChange();
     });
   });
+  const lw = document.getElementById("leftStaffWrap");
+  lw.classList.toggle("hidden", !state.staffLeft.length);
+  document.getElementById("leftStaffCount").textContent = state.staffLeft.length;
+  document.getElementById("leftStaffList").innerHTML = state.staffLeft.map(s => `
+    <div class="flex items-center justify-between gap-2 bg-slate-950/60 p-2.5 rounded-xl border border-slate-800 text-xs">
+      <span class="text-slate-300">${escapeHtml(s.name)} <span class="text-slate-500">• ${escapeHtml(s.dept)}</span></span>
+      <button data-restore-staff="${escapeHtml(s.id)}" class="px-2.5 py-1 rounded-lg font-bold bg-emerald-950 text-emerald-300 border border-emerald-800">Restore</button>
+    </div>`).join("");
+  document.querySelectorAll("[data-restore-staff]").forEach(b => b.addEventListener("click", () => {
+    const s = state.staffLeft.find(x => x.id === b.dataset.restoreStaff); if (!s) return;
+    const back = { ...s, active: true };
+    state.staffLeft = state.staffLeft.filter(x => x.id !== s.id); state.staffList.push(back);
+    api("saveStaff", { staff: staffPayload(back) });
+    afterStaffChange();
+  }));
   wrap.querySelectorAll("[data-edit-staff]").forEach(b => b.addEventListener("click", () => openEditStaff(b.dataset.editStaff)));
 }
 function afterStaffChange() {                         // keep every screen (incl. Enter Associate Counts) in step with the staff list
+  normalizeEntries();
   renderStaffList(); renderLoginSelect(); refreshMgrEntry(); renderReports(); renderDashboard();
 }
 function normMobile(v) {                              // "" = none, null = invalid, else 10 digits
@@ -2513,12 +2811,12 @@ function normMobile(v) {                              // "" = none, null = inval
   if (d.length === 11 && d.startsWith("0")) d = d.slice(1);
   return d.length === 10 ? d : null;
 }
-function nextStaffId() {                              // IDs are automatic now (EMP001, EMP002, ...)
+function nextStaffId() {                              // next free employee CODE (label only): EMP031, EMP032, ...
   let max = 0;
-  state.staffList.forEach(s => { const m = /^EMP(\d+)$/i.exec(s.id); if (m) max = Math.max(max, Number(m[1])); });
-  let n = Math.max(max, state.staffList.length) + 1, id;
-  do { id = "EMP" + String(n++).padStart(3, "0"); } while (state.staffList.some(s => s.id.toLowerCase() === id.toLowerCase()));
-  return id;
+  allStaff().forEach(s => [s.code, ...(s.oldCodes || [])].forEach(c => { const m = /^EMP(\d+)$/i.exec(c || ""); if (m) max = Math.max(max, Number(m[1])); }));
+  let n = Math.max(max, allStaff().length) + 1, c;
+  do { c = "EMP" + String(n++).padStart(3, "0"); } while (allStaff().some(s => String(s.code).toLowerCase() === c.toLowerCase()));
+  return c;
 }
 function showFormError(id, msg) { const el = document.getElementById(id); el.textContent = msg; el.classList.toggle("hidden", !msg); }
 function openEditStaff(id) {
@@ -2526,6 +2824,10 @@ function openEditStaff(id) {
   const f = document.getElementById("editStaffForm");
   f.dataset.id = id;
   f.name.value = s.name; f.mobile.value = s.mobile || "";
+  document.getElementById("editStaffCode").textContent = s.code || s.id;
+  document.getElementById("editStaffFid").textContent = s.id;
+  f.effFrom.value = TODAY_DATE; document.getElementById("effFromWrap").classList.add("hidden");
+  f.dept.onchange = () => document.getElementById("effFromWrap").classList.toggle("hidden", f.dept.value === s.dept);
   f.dept.innerHTML = [...DEPARTMENTS, ...(DEPARTMENTS.includes(s.dept) ? [] : [s.dept])].map(d => `<option${d === s.dept ? " selected" : ""}>${escapeHtml(d)}</option>`).join("");
   f.type.innerHTML = TYPES.map(([v, l]) => `<option value="${v}"${v === s.type ? " selected" : ""}>${l}</option>`).join("");
   showFormError("editStaffError", "");
@@ -2539,10 +2841,18 @@ document.getElementById("editStaffForm").addEventListener("submit", e => {
   if (mobile === null) return showFormError("editStaffError", "Enter a valid 10-digit mobile number, or leave it empty.");
   if (state.staffList.some(s => s.id !== id && s.name.toLowerCase() === name.toLowerCase() && s.dept === dept))
     return showFormError("editStaffError", "Another staff member with this name already exists in that section.");
-  const updated = { id, name, dept, type: f.type.value, mobile };
+  const old = state.staffList.find(s => s.id === id);
+  let hist = (old.deptHistory || []).slice();
+  if (dept !== old.dept) {                                                // a move: keep the old section for earlier dates
+    const from = f.effFrom.value || TODAY_DATE;
+    if (!hist.length) hist = [{ from: "0000-00-00", dept: old.dept }];
+    hist = hist.filter(x => x.from !== from);
+    hist.push({ from, dept });
+  }
+  const updated = { ...old, name, dept, type: f.type.value, mobile, deptHistory: hist };
   state.staffList = state.staffList.map(s => s.id === id ? updated : s);
   if (state.currentStaff && state.currentStaff.id === id) { state.currentStaff = updated; saveSession(); renderSession(); }
-  api("saveStaff", { staff: updated });
+  api("saveStaff", { staff: staffPayload(updated) });
   document.getElementById("editStaffModal").classList.add("hidden");
   afterStaffChange();
 });
@@ -2615,9 +2925,9 @@ document.getElementById("addStaffForm").addEventListener("submit", e => {
   if (state.staffList.some(s => s.name.toLowerCase() === name.toLowerCase() && s.dept === dept))
     return showFormError("staffFormError", "This staff member already exists in that section.");
   showFormError("staffFormError", "");
-  const member = { id: nextStaffId(), name, dept, type: fd.get("type"), mobile };
+  const member = { id: newFacilityId(), code: nextStaffId(), name, dept, type: fd.get("type"), mobile, oldCodes: [], deptHistory: [], active: true };
   state.staffList.push(member);
-  api("saveStaff", { staff: member });
+  api("saveStaff", { staff: staffPayload(member) });
   e.target.reset();
   afterStaffChange();
 });
@@ -2640,7 +2950,8 @@ document.getElementById("lockForm").addEventListener("submit", e => {
     managerUnlocked = true;
     try { sessionStorage.setItem("smartdrive_mgr", "1"); } catch (_) {}
     document.getElementById("lockModal").classList.add("hidden");
-    document.querySelector('.tab-btn[data-tab="manager"]').click();
+    const goTab = state.afterUnlock || "manager"; state.afterUnlock = null;
+    document.querySelector(`.tab-btn[data-tab="${goTab}"]`).click();
   } else {
     document.getElementById("lockError").classList.remove("hidden");
     document.getElementById("lockPin").value = "";
@@ -2670,7 +2981,7 @@ function refreshMgrEntry() {
     const p = ns.value;
     ns.innerHTML = `<option value="">Associate…</option>` + list.map(s => `<option value="${s.id}">${escapeHtml(s.name)} (${escapeHtml(s.dept)})</option>`).join("");
     if (list.some(s => s.id === p)) ns.value = p;
-    ns.closest(".mgr-row").querySelector(".mgr-code").value = ns.value;   // keep code in sync
+    ns.closest(".mgr-row").querySelector(".mgr-code").value = ns.value ? codeOf(ns.value) : "";   // keep code in sync
   });
   const isAmt = drive && drive.type === "Amount";
   document.getElementById("mgrValLabel").textContent = isAmt ? "Price (₹)" : (drive && drive.type === "Weight") ? "Weight (Kg)" : "Qty (Pcs)";
@@ -2706,7 +3017,7 @@ function addMgrRow() {
     <input class="mgr-val col-span-3 ${f}" type="number" inputmode="decimal" step="any" min="0" />
     <button type="button" class="mgr-del col-span-1 text-rose-400 hover:text-rose-300 font-bold text-sm">✕</button>`;
   const nameSel = d.querySelector(".mgr-name"), codeBox = d.querySelector(".mgr-code");
-  nameSel.addEventListener("change", () => { codeBox.value = nameSel.value; });   // employee code fills automatically
+  nameSel.addEventListener("change", () => { codeBox.value = nameSel.value ? codeOf(nameSel.value) : ""; });   // employee code fills automatically
   d.querySelector(".mgr-del").addEventListener("click", () => {
     if (document.querySelectorAll("#mgrRows .mgr-row").length > 1) d.remove(); else resetMgrRows();
   });
@@ -2735,7 +3046,7 @@ function addMgrFixedRow(st, isAmt) {
   const f = "bg-slate-950 border border-slate-800 rounded-lg p-2 text-xs text-white focus:outline-none focus:border-emerald-500";
   d.innerHTML = `
     <select class="mgr-name col-span-5 ${f}" data-fixed="1" disabled style="opacity:1"><option value="${escapeHtml(st.id)}">${escapeHtml(st.name)}</option></select>
-    <input class="mgr-code col-span-3 ${f} text-emerald-300 font-bold" type="text" readonly tabindex="-1" value="${escapeHtml(st.id)}" />
+    <input class="mgr-code col-span-3 ${f} text-emerald-300 font-bold" type="text" readonly tabindex="-1" value="${escapeHtml(st.code || st.id)}" />
     <input class="mgr-val col-span-3 ${f}" type="number" inputmode="decimal" step="any" min="0" placeholder="${isAmt ? "Price" : drive.type === "Weight" ? "Kg" : "Qty"}" />
     <button type="button" class="mgr-del col-span-1 text-rose-400 hover:text-rose-300 font-bold text-sm" title="Remove">✕</button>`;
   d.querySelector(".mgr-del").addEventListener("click", () => {
@@ -2890,7 +3201,7 @@ document.getElementById("targetsSave").addEventListener("click", () => {
   api("updateDrive", { id: d.id, targets: d.targets || {} });
   document.getElementById("targetsModal").classList.add("hidden");
   renderDrivesList(); renderDashboard();
-  if (state.activeTab === "reports") renderReports();
+  if (state.activeTab === "reports" || state.activeTab === "ranking") renderReports();
 });
 
 /* ======================================================================
@@ -2919,7 +3230,7 @@ document.getElementById("deptsSave").addEventListener("click", () => {
    ====================================================================== */
 document.getElementById("emailSummaryBtn").addEventListener("click", () => {
   const lines = [
-    "SMART DRIVE RETAIL - CONSOLIDATED DRIVE SUMMARY",
+    "SMARTDRIVE RETAIL - CONSOLIDATED DRIVE SUMMARY",
     `Date: ${formatDisplayDate(TODAY_DATE)}`,
     "----------------------------------------------",
     ...state.drives.map(d => {
@@ -2989,6 +3300,259 @@ document.querySelectorAll("[data-mgr-panel]").forEach(p => {       // small clos
   x.className = "absolute top-3 right-3 w-7 h-7 flex items-center justify-center rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold";
   x.addEventListener("click", () => showMgrPanel(null));
   p.appendChild(x);
+});
+
+/* ======================================================================
+   SALES DASHBOARD – system (POS) sales only, independent of staff entries
+   ====================================================================== */
+state.sales = []; state.salesConfig = {}; state.salesDriveId = null; state.salesPanelOpen = false; state.afterUnlock = null;
+const inr = (n, d = 0) => Number(n || 0).toLocaleString("en-IN", { minimumFractionDigits: d, maximumFractionDigits: d });
+function salesDrive() {
+  if (!state.drives.some(d => d.id === state.salesDriveId)) state.salesDriveId = state.drives[0] ? state.drives[0].id : null;
+  return state.drives.find(d => d.id === state.salesDriveId) || null;
+}
+function salesCfg(drive) {
+  const c = state.salesConfig[drive.id] || {};
+  return { valueTarget: Number(c.valueTarget) || 0, unitsPerDay: Number(c.unitsPerDay) || 0,
+           startDate: c.startDate || drive.startDate, endDate: c.endDate || drive.endDate };
+}
+function niceMax(m) {
+  if (!(m > 0)) return 100;
+  const p = Math.pow(10, Math.floor(Math.log10(m))), f = m / p;
+  return (f <= 1 ? 1 : f <= 2 ? 2 : f <= 2.5 ? 2.5 : f <= 5 ? 5 : 10) * p;
+}
+function computeSales(drive) {
+  const cfg = salesCfg(drive);
+  const list = state.sales.filter(s => s.driveId === drive.id).sort((a, b) => a.date.localeCompare(b.date));
+  const totalDays = Math.max(1, getDaysBetween(cfg.startDate, cfg.endDate) + 1);
+  const perDayVal = cfg.valueTarget ? Math.floor(cfg.valueTarget / totalDays) : 0;     // 23,50,000 / 61 days = 38,524
+  const byDate = {}; list.forEach(s => { byDate[s.date] = s; });
+  const days = list.length ? getDateRange(list[0].date, list[list.length - 1].date).map(dt =>
+    byDate[dt] ? { date: dt, qty: byDate[dt].qty, value: byDate[dt].value, has: true, id: byDate[dt].id } : { date: dt, qty: 0, value: 0, has: false }) : [];
+  const qty = days.reduce((n, x) => n + x.qty, 0), value = days.reduce((n, x) => n + x.value, 0), n = days.length;
+  const tgtVal = perDayVal * n, tgtQty = cfg.unitsPerDay * n;
+  const balance = Math.max(0, cfg.valueTarget - value);
+  const daysLeft = Math.max(0, getDaysBetween(TODAY_DATE, cfg.endDate));
+  return { cfg, days, n, qty, value, perDayVal, totalDays, tgtVal, tgtQty, balance, daysLeft,
+           required: daysLeft > 0 ? balance / daysLeft : balance,
+           evAch: cfg.valueTarget ? value / cfg.valueTarget * 100 : null,
+           qtyAch: tgtQty ? qty / tgtQty * 100 : null,
+           salesAch: tgtVal ? value / tgtVal * 100 : null };
+}
+function salesChartSVG(days) {
+  const n = days.length, slot = 46, padL = 54, padR = 14, padT = 34, padB = 48, H = 300;
+  const W = Math.max(520, n * slot + padL + padR), innerW = W - padL - padR, innerH = H - padT - padB;
+  const maxV = niceMax(Math.max(0, ...days.map(d => d.value)));
+  const sl = innerW / n, bw = Math.min(34, sl * 0.62), y = v => padT + innerH - (v / maxV) * innerH;
+  let grid = "", bars = "", lbls = "", xl = "", pts = [];
+  for (let i = 0; i <= 5; i++) {
+    const v = maxV / 5 * i, yy = y(v);
+    grid += `<line x1="${padL}" x2="${W - padR}" y1="${yy}" y2="${yy}" stroke="#e2e8f0"/><text x="${padL - 6}" y="${yy + 3}" text-anchor="end" font-size="10" fill="#475569">${inr(v)}</text>`;
+  }
+  days.forEach((d, i) => {
+    const cx = padL + sl * i + sl / 2, yy = y(d.value);
+    bars += `<rect x="${cx - bw / 2}" y="${yy}" width="${bw}" height="${Math.max(0, padT + innerH - yy)}" rx="3" fill="url(#salesBar)"/>`;
+    pts.push([cx, yy]);
+    if (n <= 24 && d.value > 0) lbls += `<text x="${cx}" y="${yy - 8}" text-anchor="middle" font-size="10" font-weight="700" fill="#0f172a">${inr(d.value)}</text>`;
+    xl += `<text transform="translate(${cx},${H - padB + 14}) rotate(-45)" text-anchor="end" font-size="10" fill="#334155">${d.date.slice(8)}/${d.date.slice(5, 7)}</text>`;
+  });
+  const line = pts.length > 1 ? `<polyline points="${pts.map(p => p.join(",")).join(" ")}" fill="none" stroke="#dc2626" stroke-width="2"/>` : "";
+  const dots = pts.map(p => `<circle cx="${p[0]}" cy="${p[1]}" r="3" fill="#dc2626"/>`).join("");
+  return `<svg viewBox="0 0 ${W} ${H}" style="width:100%;min-width:${W}px" xmlns="http://www.w3.org/2000/svg">
+    <defs><linearGradient id="salesBar" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2447a6"/><stop offset="1" stop-color="#0b2a6b"/></linearGradient></defs>
+    ${grid}<line x1="${padL}" x2="${padL}" y1="${padT}" y2="${padT + innerH}" stroke="#94a3b8"/>${bars}${line}${dots}${lbls}${xl}</svg>`;
+}
+function renderSales() {
+  const sel = document.getElementById("salesDriveSelect"), dash = document.getElementById("salesDash");
+  sel.innerHTML = state.drives.map(d => `<option value="${d.id}">${escapeHtml(d.name)}</option>`).join("");
+  const drive = salesDrive();
+  if (!drive) { dash.innerHTML = `<p class="text-xs text-slate-500 text-center py-6">Create a drive in Manager first</p>`; return; }
+  sel.value = String(drive.id);
+  document.getElementById("salesManage").classList.toggle("hidden", !(managerUnlocked && state.salesPanelOpen));
+  document.getElementById("salesManageBtn").textContent = !managerUnlocked ? "🔒 Upload / Edit sales data" : state.salesPanelOpen ? "✕ Close upload panel" : "⬆ Upload / Edit sales data";
+
+  const c = computeSales(drive), cfg = c.cfg;
+  const pct = v => v === null ? "–" : v.toFixed(2) + "%";
+  const stat = (icon, label, value, extra) => `<div class="flex items-center gap-2.5 rounded-2xl bg-white border border-blue-100 shadow-sm p-2.5">
+      <div class="text-2xl shrink-0 w-9 text-center">${icon}</div>
+      <p class="flex-1 min-w-0 text-[13px] font-extrabold text-[#0b2a6b] leading-tight">${label}</p>
+      <div class="rounded-xl bg-amber-100 px-3 py-2 text-right max-w-[58%]"><p class="text-base sm:text-lg font-extrabold text-slate-900 whitespace-nowrap">${value}</p>${extra ? `<p class="text-[10px] text-slate-600 leading-tight">${extra}</p>` : ""}</div></div>`;
+
+  const header = `<div class="flex flex-wrap items-center justify-between gap-2">
+      <div class="rounded-2xl bg-gradient-to-r from-[#c8101c] to-[#e8333c] px-4 py-2.5 text-white shadow">
+        <p class="text-lg sm:text-2xl font-black leading-tight">EVENT PERFORMANCE <span class="text-yellow-300">DASHBOARD</span></p>
+        <p class="text-[11px] text-red-100">System sales data only • staff entries are not used</p></div>
+      <div class="text-right"><p class="text-base font-extrabold text-[#0b2a6b]">${escapeHtml(drive.name)}</p>
+        <p class="text-[11px] text-slate-500">${formatDisplayDate(cfg.startDate)} → ${formatDisplayDate(cfg.endDate)} • ${c.totalDays} days</p></div></div>`;
+  const targetBar = `<div class="rounded-2xl bg-[#0b2a6b] text-white px-4 py-3 grid grid-cols-2 gap-3 items-center">
+      <div class="flex items-center gap-2.5"><span class="text-3xl">🎯</span><div><p class="text-[13px] font-bold text-sky-100">Event Target</p>
+        <p class="text-lg sm:text-2xl font-black text-yellow-300">${cfg.valueTarget ? "₹" + inr(cfg.valueTarget) : "Not set"}</p></div></div>
+      <div class="flex items-center gap-2.5 border-l border-white/30 pl-3"><span class="text-3xl">🛒</span><div><p class="text-[13px] font-bold text-sky-100">Per Day Target</p>
+        <p class="text-sm sm:text-xl font-black text-yellow-300">${cfg.unitsPerDay ? inr(cfg.unitsPerDay) + " Units" : "– Units"} <span class="text-white/50">|</span> ${c.perDayVal ? "₹" + inr(c.perDayVal) : "–"}</p></div></div></div>`;
+
+  if (!c.days.length) {
+    dash.innerHTML = `<div class="rounded-3xl bg-gradient-to-br from-blue-50 via-white to-red-50 border border-blue-100 p-3 sm:p-4 space-y-3 text-slate-900">${header}${targetBar}
+      <p class="text-sm text-slate-600 text-center py-8">No system sales uploaded for this drive yet.<br><span class="text-xs text-slate-500">Use “Upload / Edit sales data” (manager) to add the day-wise quantity and sales value.</span></p></div>`;
+    return;
+  }
+
+  const C = 2 * Math.PI * 48, arc = Math.min(100, Math.max(0, c.evAch || 0)) / 100 * C;
+  const donut = `<div class="rounded-2xl bg-white border border-blue-100 shadow-sm p-3 flex items-center justify-center h-full">
+      <div class="relative w-full max-w-[210px]"><svg viewBox="0 0 120 120" class="w-full -rotate-90">
+        <circle cx="60" cy="60" r="48" fill="none" stroke="#d9d9d9" stroke-width="13"/>
+        <circle cx="60" cy="60" r="48" fill="none" stroke="#dc1f26" stroke-width="13" stroke-dasharray="${arc} ${C}"/></svg>
+        <div class="absolute inset-0 flex flex-col items-center justify-center text-center">
+          <p class="text-sm sm:text-base font-extrabold text-slate-900 leading-tight">Event<br>Achievement</p>
+          <p class="text-2xl sm:text-3xl font-black text-[#d5121f]">${pct(c.evAch)}</p></div></div></div>`;
+
+  const middle = `<div class="space-y-2">
+      ${stat("🪙", `Total Sales<br><span class="font-semibold text-slate-500 text-[11px]">(${c.n} Days)</span>`, "₹" + inr(c.value, 2))}
+      ${stat("📦", `Total Quantity<br><span class="font-semibold text-slate-500 text-[11px]">(${c.n} Days)</span>`, inr(c.qty) + " Units")}
+      ${stat("🎯", "Quantity Achievement", pct(c.qtyAch), c.tgtQty ? `(vs. ${c.n}-day Target: ${inr(c.tgtQty)} Units)` : "(set units target)")}
+      ${stat("📈", "Sales Achievement", pct(c.salesAch), c.tgtVal ? `(vs. ${c.n}-day Target: ₹${inr(c.tgtVal)})` : "(set event target)")}</div>`;
+
+  const right = `<div class="space-y-2">
+      <div class="rounded-2xl bg-rose-50 border border-rose-200 p-3 flex items-center gap-3"><span class="text-3xl">📅</span>
+        <div><p class="text-sm font-extrabold text-slate-900">Days Remaining</p><p class="text-4xl font-black text-[#d5121f] leading-none mt-1">${c.daysLeft}</p></div></div>
+      <div class="rounded-2xl bg-rose-50 border border-rose-200 p-3"><p class="text-sm font-extrabold text-slate-900">🎯 Balance to Achieve</p>
+        <p class="mt-1.5 rounded-full bg-[#d5121f] text-white text-lg sm:text-xl font-black text-center py-1.5">${cfg.valueTarget ? "₹" + inr(c.balance, 2) : "–"}</p></div>
+      <div class="rounded-2xl bg-rose-50 border border-rose-200 p-3"><p class="text-sm font-extrabold text-slate-900">📊 Required Daily Sales <span class="font-semibold text-slate-500 text-[11px]">(to meet Event Target)</span></p>
+        <p class="mt-1.5 rounded-full bg-[#0b2a6b] text-white text-lg sm:text-xl font-black text-center py-1.5">${cfg.valueTarget ? "₹" + inr(c.required, 2) : "–"}</p></div></div>`;
+
+  const edit = managerUnlocked;
+  const rowsHtml = c.days.map(x => `<tr ${x.has && edit ? `data-saledate="${x.date}"` : ""} class="border-t border-slate-200 ${x.has ? "" : "bg-rose-50"} ${edit ? "cursor-pointer hover:bg-blue-50" : ""}">
+      <td class="px-2 py-1.5 text-center whitespace-nowrap">${formatDisplayDate(x.date)}</td>
+      <td class="px-2 py-1.5 text-center font-semibold">${x.has ? inr(x.qty) : "–"}</td>
+      <td class="px-2 py-1.5 text-right font-mono">${x.has ? inr(x.value, 2) : '<span class="text-rose-500 text-[10px] font-sans">no data</span>'}</td>
+      ${edit ? `<td class="px-1 text-center">${x.has ? `<button type="button" data-saledel="${escapeHtml(x.id)}" class="text-rose-500 font-bold px-1" title="Delete day">✕</button>` : ""}</td>` : ""}</tr>`).join("");
+  const table = `<div class="rounded-2xl bg-white border border-slate-300 shadow-sm overflow-hidden"><div class="max-h-[460px] overflow-y-auto"><table class="w-full text-xs text-slate-900">
+      <thead class="sticky top-0 bg-[#0b2a6b] text-white"><tr><th class="px-2 py-2">Date</th><th class="px-2 py-2">Quantity</th><th class="px-2 py-2 text-right">Sales Value (₹)</th>${edit ? "<th></th>" : ""}</tr></thead>
+      <tbody>${rowsHtml}</tbody>
+      <tfoot class="sticky bottom-0 bg-yellow-300 font-extrabold"><tr><td class="px-2 py-2 text-center">Total (${c.n} Days)</td><td class="px-2 py-2 text-center">${inr(c.qty)}</td><td class="px-2 py-2 text-right font-mono">₹${inr(c.value, 2)}</td>${edit ? "<td></td>" : ""}</tr></tfoot></table></div></div>`;
+  const chart = `<div class="rounded-2xl bg-white border border-slate-300 shadow-sm p-3 space-y-2">
+      <p class="mx-auto w-fit rounded-xl bg-[#0b2a6b] text-white font-extrabold text-sm px-5 py-1.5">Daily Sales Trend (Value ₹)</p>
+      <div class="overflow-x-auto">${salesChartSVG(c.days)}</div></div>`;
+
+  dash.innerHTML = `<div class="rounded-3xl bg-gradient-to-br from-blue-50 via-white to-red-50 border border-blue-100 p-3 sm:p-4 space-y-3 text-slate-900">
+      ${header}${targetBar}
+      ${cfg.valueTarget ? "" : '<p class="text-[11px] text-amber-700 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2">Event target is not set yet – a manager can set it from “Upload / Edit sales data”.</p>'}
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-3"><div class="lg:col-span-3">${donut}</div><div class="lg:col-span-5">${middle}</div><div class="lg:col-span-4">${right}</div></div>
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-3"><div class="lg:col-span-5">${table}</div><div class="lg:col-span-7">${chart}</div></div>
+      <p class="text-[10px] text-slate-500">Days Remaining counts the days after today up to the event end date. “${c.n}-day target” is the per-day target × the days from the first to the last uploaded sales day.</p></div>`;
+}
+function fillSalesForms() {
+  const d = salesDrive(); if (!d) return;
+  const c = salesCfg(d);
+  document.getElementById("cfgTarget").value = c.valueTarget || "";
+  document.getElementById("cfgUnits").value = c.unitsPerDay || "";
+  document.getElementById("cfgStart").value = c.startDate || "";
+  document.getElementById("cfgEnd").value = c.endDate || "";
+  const sd = document.getElementById("saleDate"); if (!sd.value) sd.value = getDateOffset(TODAY_DATE, -1);
+}
+function saleMsg(t, ok) {
+  const el = document.getElementById("saleMsg");
+  el.textContent = t; el.className = `text-xs font-semibold whitespace-pre-line ${ok ? "text-emerald-400" : "text-rose-400"} ${t ? "" : "hidden"}`;
+}
+function parseDMY(s) {
+  s = String(s || "").trim().replace(/,+$/, "");
+  let m = /^(\d{4})[-\/.](\d{1,2})[-\/.](\d{1,2})$/.exec(s), y, mo, d;
+  if (m) { y = +m[1]; mo = +m[2]; d = +m[3]; }
+  else {
+    m = /^(\d{1,2})[-\/.](\d{1,2})[-\/.](\d{2,4})$/.exec(s); if (!m) return null;
+    d = +m[1]; mo = +m[2]; y = +m[3]; if (y < 100) y += 2000;
+  }
+  if (mo < 1 || mo > 12 || d < 1 || d > 31) return null;
+  const iso = `${y}-${String(mo).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+  return new Date(iso + "T00:00:00").getDate() === d ? iso : null;
+}
+function parseSalesText(text) {
+  const out = [], errs = [];
+  String(text || "").split(/\r?\n/).forEach((line, i) => {
+    const t = line.trim(); if (!t) return;
+    const parts = (/[\t ]/.test(t) ? t.split(/[\t ]+/) : t.split(",")).map(x => x.trim()).filter(x => x !== "");
+    const date = parts.length ? parseDMY(parts[0]) : null;
+    if (!date) { if (!/date|qty|quantity|value/i.test(t)) errs.push(`Line ${i + 1}: date not understood (“${t.slice(0, 30)}”)`); return; }
+    if (parts.length < 3) { errs.push(`Line ${i + 1}: needs date, quantity and sales value`); return; }
+    const num = x => Number(String(x).replace(/[^0-9.\-]/g, ""));
+    const qty = num(parts[1]), value = num(parts[2]);
+    if (!isFinite(qty) || !isFinite(value) || qty < 0 || value < 0) { errs.push(`Line ${i + 1}: quantity / value is not a valid number`); return; }
+    out.push({ date, qty, value });
+  });
+  const seen = {}; out.forEach(x => { seen[x.date] = x; });             // same date twice: the last line wins
+  return { rows: Object.values(seen), errs };
+}
+function upsertSales(drive, list) {
+  list.forEach(x => {
+    const id = drive.id + "_" + x.date, rec = { id, driveId: drive.id, date: x.date, qty: x.qty, value: x.value };
+    const i = state.sales.findIndex(s => s.id === id);
+    if (i >= 0) state.sales[i] = rec; else state.sales.push(rec);
+  });
+  api("saveSales", { sales: list.map(x => ({ driveId: drive.id, date: x.date, qty: x.qty, value: x.value })) });
+  renderSales();
+}
+document.getElementById("salesDriveSelect").addEventListener("change", e => {
+  state.salesDriveId = Number(e.target.value); renderSales(); fillSalesForms();
+});
+document.getElementById("salesManageBtn").addEventListener("click", () => {
+  if (!managerUnlocked) { state.afterUnlock = "sales"; state.salesPanelOpen = true; openLock(); return; }
+  state.salesPanelOpen = !state.salesPanelOpen; renderSales(); if (state.salesPanelOpen) fillSalesForms();
+});
+document.getElementById("saveCfgBtn").addEventListener("click", () => {
+  const d = salesDrive(); if (!d) return;
+  const valueTarget = Number(document.getElementById("cfgTarget").value) || 0, unitsPerDay = Number(document.getElementById("cfgUnits").value) || 0;
+  const startDate = document.getElementById("cfgStart").value, endDate = document.getElementById("cfgEnd").value;
+  if (!(valueTarget > 0)) return saleMsg("Enter the event target (₹).", false);
+  if (!startDate || !endDate || endDate < startDate) return saleMsg("Check the event start and end dates.", false);
+  const config = { driveId: d.id, valueTarget, unitsPerDay, startDate, endDate };
+  state.salesConfig[d.id] = config;
+  api("saveSalesConfig", { config });
+  saleMsg("Targets saved.", true); renderSales();
+});
+document.getElementById("saveSaleBtn").addEventListener("click", () => {
+  const d = salesDrive(); if (!d) return;
+  const date = document.getElementById("saleDate").value, q = document.getElementById("saleQty").value, v = document.getElementById("saleValue").value;
+  if (!date) return saleMsg("Pick the date.", false);
+  if (q === "" && v === "") return saleMsg("Enter the quantity and the sales value.", false);
+  const qty = Number(q) || 0, value = Number(v) || 0;
+  if (qty < 0 || value < 0) return saleMsg("Quantity and value cannot be negative.", false);
+  upsertSales(d, [{ date, qty, value }]);
+  saleMsg(`Saved ${formatDisplayDate(date)}: ${inr(qty)} units, ₹${inr(value, 2)}.`, true);
+  document.getElementById("saleQty").value = ""; document.getElementById("saleValue").value = "";
+  document.getElementById("saleDate").value = getDateOffset(date, 1) <= TODAY_DATE ? getDateOffset(date, 1) : date;   // ready for the next day
+});
+document.getElementById("saleFile").addEventListener("change", e => {
+  const f = e.target.files[0]; if (!f) return;
+  const r = new FileReader();
+  r.onload = () => { document.getElementById("saleBulk").value = String(r.result || ""); saleMsg("File loaded. Check the lines, then tap “Save all days”.", true); };
+  r.readAsText(f); e.target.value = "";
+});
+document.getElementById("saveBulkBtn").addEventListener("click", () => {
+  const d = salesDrive(); if (!d) return;
+  const { rows, errs } = parseSalesText(document.getElementById("saleBulk").value);
+  if (errs.length) return saleMsg("Nothing saved. Please fix:\n" + errs.slice(0, 8).join("\n") + (errs.length > 8 ? `\n…and ${errs.length - 8} more` : ""), false);
+  if (!rows.length) return saleMsg("No lines found. Format: date, quantity, sales value.", false);
+  upsertSales(d, rows);
+  document.getElementById("saleBulk").value = "";
+  const q = rows.reduce((n, x) => n + x.qty, 0), v = rows.reduce((n, x) => n + x.value, 0);
+  saleMsg(`Saved ${rows.length} day${rows.length === 1 ? "" : "s"} • ${inr(q)} units • ₹${inr(v, 2)}.`, true);
+});
+document.getElementById("salesDash").addEventListener("click", e => {
+  if (!managerUnlocked) return;
+  const del = e.target.closest("[data-saledel]");
+  if (del) {
+    const rec = state.sales.find(s => s.id === del.dataset.saledel); if (!rec) return;
+    if (!confirm(`Delete the sales of ${formatDisplayDate(rec.date)}?`)) return;
+    state.sales = state.sales.filter(s => s.id !== rec.id);
+    api("deleteSale", { id: rec.id }); renderSales(); return;
+  }
+  const row = e.target.closest("[data-saledate]");
+  if (row) {
+    const rec = state.sales.find(s => s.driveId === state.salesDriveId && s.date === row.dataset.saledate); if (!rec) return;
+    state.salesPanelOpen = true; renderSales(); fillSalesForms();
+    document.getElementById("saleDate").value = rec.date; document.getElementById("saleQty").value = rec.qty; document.getElementById("saleValue").value = rec.value;
+    saleMsg(`Editing ${formatDisplayDate(rec.date)} – change the numbers and tap “Save day”.`, true);
+    document.getElementById("salesManage").scrollIntoView({ behavior: "smooth", block: "start" });
+  }
 });
 
 boot();
